@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.revrobotics.REVLibError;
 import com.ctre.phoenix.ErrorCode;
 import org.junit.jupiter.api.Test;
-// ----------------------------------------------------------[Robot Container Class]--------------------------------------------------------//
+// ------------------------------------------------------------[Motor Test Class]-----------------------------------------------------------//
 public final class UtilitiesTest {
 
   @Test
@@ -31,5 +31,5 @@ public final class UtilitiesTest {
     if (error != REVLibError.kOk) {
         throw new RuntimeException(String.format("%s: %s", message, error.toString()));
     }
-}
+  }
 }
