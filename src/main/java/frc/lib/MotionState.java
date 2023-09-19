@@ -18,7 +18,7 @@ import java.util.Optional;
  * {@link edu.wpi.first.math.geometry.Rotation3d Rotation}, both of which are {@link java.util.Optional Optional} values that may or may
  * not exist upon creation of a state. </p>
  * 
- * @author Cody Washington
+ * @author Cody Washington (Jelatinone)
  * 
  */
 public final class MotionState implements Interpolatable<MotionState>, Cloneable {
