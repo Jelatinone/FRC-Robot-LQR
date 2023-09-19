@@ -2,10 +2,10 @@
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -17,15 +17,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Supplier;
 
-// -----------------------------------------------------------[Motion Module Class]---------------------------------------------------------//
-/**
- * 
- * 
- * <h1> SwerveModule <h1>
- * 
- * 
- * 
- */
+// -----------------------------------------------------------[Motion Module Class]--Z  ` ` qawe`1234567890-[=a qswdefj.zxcv n-------------------------------------------------------//123456790-=rt5y7uop[]  
 public final class SwerveModule implements AutoCloseable {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   private final Supplier<TrapezoidProfile.Constraints> ROTATIONAL_MOTION_CONSTRAINTS;
@@ -81,7 +73,7 @@ public final class SwerveModule implements AutoCloseable {
       MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position,TargetPositionStateReference.velocity);
       MOTION_CONTROL_LOOP.correct(VecBuilder.fill(STATE_SENSOR.get().angle.getRadians()));
       MOTION_CONTROL_LOOP.predict(IntervalTime);
-      ROTATION_CONTROLLER.setVoltage(MOTION_CONTROL_LOOP.getU(0));
+      ROTATION_CONTROLLER.setVoltage(MOTION_CONTROL_LOOP.getU((0)));
     }
   }
 
@@ -104,8 +96,11 @@ public final class SwerveModule implements AutoCloseable {
     TargetStateCommand.repeatedly().schedule();
   }
   // --------------------------------------------------------------[Abstract]---------------------------------------------------------------//
-  public void post(NetworkTableInstance Table) {
-
+  public void post(final ShuffleboardTab Tab) {
+    Tab.add("REAL TRANSLATION", STATE_SENSOR.get().speedMetersPerSecond);    
+    Tab.add("REAL ROTATION", STATE_SENSOR.get().angle);
+    Tab.add("TARGET POSITION ROTATION (Rad)", TargetPositionState.position);
+    Tab.add("TARGET POSITION VELOCITY (Rad/s)", TargetPositionState.velocity);
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
@@ -123,8 +118,8 @@ public final class SwerveModule implements AutoCloseable {
 
   public void disable() {
     TargetStateCommand.cancel();
-    TRANSLATION_CONTROLLER.setVoltage((0));
-    ROTATION_CONTROLLER.setVoltage((0));
+    TRANSLATION_CONTROLLER.stopMotor();
+    ROTATION_CONTROLLER.stopMotor();
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   public SwerveModuleState getModuleState() {
