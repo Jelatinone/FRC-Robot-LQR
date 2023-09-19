@@ -104,9 +104,12 @@ public final class SwerveModule implements AutoCloseable {
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
-  public synchronized void reset(final Double EncoderPositionRadian, final Double EncoderVelocityRadiansPerSecond) {
-    MOTION_CONTROL_LOOP.reset(VecBuilder.fill(EncoderPositionRadian,EncoderVelocityRadiansPerSecond));
-    TargetPositionStateReference = new TrapezoidProfile.State(EncoderPositionRadian, EncoderVelocityRadiansPerSecond);
+  public synchronized void reset() {
+    var State = STATE_SENSOR.get();
+    var EncoderPositionRadian = State.angle.getRadians();
+    var EncoderPositionRadiansPerSecond = State.angle.getRadians() / (TimeReference - Timer.getFPGATimestamp());
+    MOTION_CONTROL_LOOP.reset(VecBuilder.fill(EncoderPositionRadian,EncoderPositionRadiansPerSecond));
+    TargetPositionStateReference = new TrapezoidProfile.State(EncoderPositionRadian, EncoderPositionRadiansPerSecond);
 
   }
 
