@@ -58,6 +58,30 @@ public final class DrivebaseSubsystem extends SubsystemBase {
     PathPlannerServer.startServer(Values.PATHPLANNER_SERVER_PORT);
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
+  @Override
+  public void periodic() {
+    Double IntervalTime;
+    if(TimeInterval != (0)) {
+      var RealTime = Timer.getFPGATimestamp();
+      IntervalTime = RealTime - TimeInterval;
+      TimeInterval = RealTime;
+    } else {
+      IntervalTime = (0.02);
+    }
+    FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(),getModulePositions()));
+  }
+
+  public static synchronized void reset(Pose2d FieldRelativePose) {
+    POSE_ESTIMATOR.resetPosition(
+    Hardware.GYROSCOPE.getRotation2d(),    
+    getModulePositions(),
+    FieldRelativePose);
+  }
+
+  public static synchronized void stop() {
+    MODULES.forEach((MODULE) -> MODULE.stop());
+  }
+  // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
   public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, BooleanSupplier ControlType) {
     var Demand = KINEMATICS.toSwerveModuleStates((FieldOriented)?
       (ChassisSpeeds.fromFieldRelativeSpeeds(
@@ -88,32 +112,6 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       new SwerveModuleState((0.0),new Rotation2d(Units.degreesToRadians((135)))))
       ,() -> false);
   }
-
-  public static synchronized void reset(Pose2d FieldRelativePose) {
-    POSE_ESTIMATOR.resetPosition(
-    Hardware.GYROSCOPE.getRotation2d(),    
-    getModulePositions(),
-    FieldRelativePose);
-  }
-
-  public static synchronized void stop() {
-    MODULES.forEach((MODULE) -> MODULE.stop());
-  }
-
-  @Override
-  public void periodic() {
-    Double IntervalTime;
-    if(TimeInterval != (0)) {
-      var RealTime = Timer.getFPGATimestamp();
-      IntervalTime = RealTime - TimeInterval;
-      TimeInterval = RealTime;
-    } else {
-      IntervalTime = (0.02);
-    }
-    FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(),getModulePositions()));
-  }
-  // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
-
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   public static SwerveModulePosition[] getModulePositions() {
     return (SwerveModulePosition[])MODULES.map(
