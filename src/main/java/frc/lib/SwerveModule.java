@@ -116,7 +116,7 @@ public final class SwerveModule implements AutoCloseable {
     TargetStateCommand.cancel();
   }
 
-  public void disable() {
+  public void stop() {
     TargetStateCommand.cancel();
     TRANSLATION_CONTROLLER.stopMotor();
     ROTATION_CONTROLLER.stopMotor();
