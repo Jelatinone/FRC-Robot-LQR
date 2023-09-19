@@ -7,7 +7,12 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.auto.PIDConstants;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.server.PathPlannerServer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -112,7 +117,36 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       new SwerveModuleState((0.0),new Rotation2d(Units.degreesToRadians((135)))))
       ,() -> false);
   }
+
+  public static synchronized void set(final List<SwerveModuleState> Demand) {
+    SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.MAXIMUM_VELOCITY);
+    MODULES.forEach((Module) -> {
+      Module.set(() -> Demand.iterator().next(), () -> false);
+    });
+  }
+
+  public static void setFieldOriented(final Boolean isFieldOriented) {
+    FieldOriented = isFieldOriented;
+  }
+
+  public static void toggleFieldOriented() {
+    FieldOriented = !FieldOriented;
+  }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
+  public static synchronized Command getAutonomousCommand(final AutonomousTrajectory Trajectory) {
+    MODULES.forEach((Module) -> Module.reset());
+    return new SwerveAutoBuilder(
+      POSE_ESTIMATOR::getEstimatedPosition,
+      Pose -> reset(Pose),
+      KINEMATICS,
+      new PIDConstants((0.0), (0.0), (0.0)),
+      new PIDConstants((0.0), (0.0), (0.0)), 
+      Demand -> set(Arrays.asList(Demand)), 
+      (null), //TODO: Event Map from Autonomous Trajectory
+      (true),
+      (Subsystem) INSTANCE).fullAuto(new PathPlannerTrajectory()); //TODO: Constraints from Autonomous Trajectory
+  }
+
   public static SwerveModulePosition[] getModulePositions() {
     return (SwerveModulePosition[])MODULES.map(
       (Module) -> 

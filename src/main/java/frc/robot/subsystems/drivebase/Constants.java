@@ -29,6 +29,7 @@ public final class Constants {
     public static final Double WHEEL_DIAMETER = (0.1016);    
     public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;
     public static final Double BUILTIN_ENCODER_SENSITIVITY = (2048.0);
+    public static final Double MAXIMUM_ACCELERATION = (4.0);    
     public static final Double MAXIMUM_VELOCITY = (15.0);    
     public static final Double SCALE_FACTOR = (1.0/50.0);
     public static final Double ROBOT_WIDTH = (0.6858);    
