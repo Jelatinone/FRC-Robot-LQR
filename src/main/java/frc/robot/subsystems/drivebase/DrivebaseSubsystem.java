@@ -44,11 +44,10 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
       .stream().parallel();
 
   private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
-    new Translation2d((Values.Chassis.ROBOT_WIDTH)/2, (Values.Chassis.ROBOT_WIDTH)/2),
-    new Translation2d((Values.Chassis.ROBOT_WIDTH)/2, -(Values.Chassis.ROBOT_WIDTH)/2),
-    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/2, (Values.Chassis.ROBOT_WIDTH)/2),
-    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/2, -(Values.Chassis.ROBOT_WIDTH)/2)
-  );
+    new Translation2d((Values.Chassis.ROBOT_WIDTH)/(2), (Values.Chassis.ROBOT_WIDTH)/(2)),
+    new Translation2d((Values.Chassis.ROBOT_WIDTH)/(2), -(Values.Chassis.ROBOT_WIDTH)/(2)),
+    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/(2), (Values.Chassis.ROBOT_WIDTH)/(2)),
+    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/(2), -(Values.Chassis.ROBOT_WIDTH)/(2)));
 
   private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(
     KINEMATICS,
@@ -60,8 +59,8 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
   private static final Field2d FIELD = new Field2d();
 
   // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
-  private static Boolean FieldOriented = false;  
-  private static Double TimeInterval = 0.0;
+  private static Boolean FieldOriented = (false);  
+  private static Double TimeInterval = (0.0);
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private DrivebaseSubsystem() {
     PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
@@ -82,12 +81,12 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
     MODULES.forEach(
     (Module) -> {
       Module.post(ModuleNumber.get()); 
-      ModuleNumber.set(ModuleNumber.get() + 1);
+      ModuleNumber.set(ModuleNumber.get() + (1));
     });
   }
 
   public void accept(final SwerveModuleState[] Demand) {
-    set(Arrays.asList(Demand),() -> false);
+    set(Arrays.asList(Demand),() -> (false));
   }
 
   public synchronized void reset(Pose2d FieldRelativePose) {
@@ -112,7 +111,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
     (new ChassisSpeeds(Translation_X,Translation_Y,Orientation))));
     Demand.forEach(
       (State) -> 
-        State.speedMetersPerSecond = (((State.speedMetersPerSecond * 60) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / 600));
+        State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
     set(Demand.toList(),ControlType);
   }
 
@@ -126,7 +125,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
   public static synchronized void set(final List<SwerveModuleState> Demand) {
     SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.Limit.ROBOT_MAXIMUM_VELOCITY);
     MODULES.forEach((Module) -> {
-      Module.set(() -> Demand.iterator().next(), () -> false);
+      Module.set(() -> Demand.iterator().next(), () -> (false));
     });
   }
 
@@ -136,7 +135,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
       new SwerveModuleState((0.0),new Rotation2d(Units.degreesToRadians((45)))),
       new SwerveModuleState((0.0),new Rotation2d(Units.degreesToRadians((225)))),
       new SwerveModuleState((0.0),new Rotation2d(Units.degreesToRadians((135)))))
-      ,() -> false);
+      ,() -> (false));
   }
 
   public static void setFieldOriented(final Boolean isFieldOriented) {
@@ -175,7 +174,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements AutoClose
   }
 
   public static synchronized DrivebaseSubsystem getInstance() {
-    if(java.util.Objects.equals(INSTANCE, null)) {
+    if(java.util.Objects.equals(INSTANCE, (null))) {
       INSTANCE = new DrivebaseSubsystem();
     }
     return INSTANCE;
