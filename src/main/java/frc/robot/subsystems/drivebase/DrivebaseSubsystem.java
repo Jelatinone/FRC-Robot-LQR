@@ -1,11 +1,12 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot.subsystems.drivebase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.auto.PIDConstants;
 import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.server.PathPlannerServer;
+
+
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -34,7 +35,15 @@ import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
 
 // -------------------------------------------------------[Drivebase Subsystem Class]-------------------------------------------------------//
-//TODO Pathplanner Integration, Limelight Measurement Pose Estimation, Configurations
+//TODO Complete Pathplanner Integration, Limelight Measurement Pose Estimation
+/**
+ * 
+ * 
+ * <h1> DrivebaseSubsystem </h1>
+ * 
+ * 
+ *  @author Cody Washington (@Jelatinone)
+ */
 public final class DrivebaseSubsystem extends SubsystemBase implements AutoCloseable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   private static DrivebaseSubsystem INSTANCE;

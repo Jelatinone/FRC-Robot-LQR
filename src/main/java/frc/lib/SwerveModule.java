@@ -20,6 +20,16 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
+import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
+import com.ctre.phoenix.sensors.SensorInitializationStrategy;
+import com.ctre.phoenix.sensors.WPI_CANCoder;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMax.IdleMode;
+
 // -----------------------------------------------------------[Motion Module Class]---------------------------------------------------------//
 /**
  * 
@@ -34,7 +44,7 @@ import java.util.function.Supplier;
  * <p> SwerveModules can consume a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} as a demand, and computes
  * the necessary voltage using a {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} control loop. <p>
  * 
- * @author Cody Washington (Jelatinone)
+ * @author Cody Washington (@Jelatinone)
  */
 public final class SwerveModule implements Closeable, Consumer<SwerveModuleState> {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
@@ -200,7 +210,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
 
   /**
    * Consume a SwerveModuleState as shorthand for calling {@link #set(Supplier, BooleanSupplier)}
-   * @param Demand - The 
+   * @param Demand - The desired state for the module to achieve
    */
   public void accept(final SwerveModuleState Demand) {
     set(STATE_SENSOR, () -> false);
@@ -217,6 +227,93 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
     SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getVelocity());
     SmartDashboard.putNumber(Prefix + "OUTPUT ROTATION [-1,1]",ROTATION_CONTROLLER.get());
     SmartDashboard.putNumber(Prefix + "OUTPUT VELOCITY [-1,1]",TRANSLATION_CONTROLLER.get());
+  }
+
+  /**
+   * Configure a {@link com.ctre.phoenix.motorcontrol.can.WPI_TalonFX WPI_TalonFX} rotational controller to swerve module specifications
+   * @param Controller - Controller that is to be configured
+   * @param AzimuthEncoder - Azimuth CANCoder instance acting as a feedback filter reference point, and an azimuth sensor position source
+   * @param CurrentLimit - The current limit configuration of the motor's stator.
+   * @param Deadband - Desired percent deabdand of controller inputs
+   * @return A copy of the configured controller
+   */
+  public static WPI_TalonFX configureRotationController(final WPI_TalonFX Controller, final WPI_CANCoder AzimuthEncoder, final StatorCurrentLimitConfiguration CurrentLimit, final Double Deadband) {
+    Controller.configFactoryDefault();
+    Controller.setInverted(TalonFXInvertType.CounterClockwise);
+    Controller.setNeutralMode(NeutralMode.Brake);
+    Controller.configRemoteFeedbackFilter(AzimuthEncoder, (0));
+    Controller.configSelectedFeedbackSensor(FeedbackDevice.RemoteSensor0);
+    Controller.configStatorCurrentLimit(CurrentLimit);
+    Controller.setSelectedSensorPosition(AzimuthEncoder.getAbsolutePosition());
+    Controller.configNeutralDeadband(Deadband);
+    Controller.configVoltageCompSaturation((12));
+    Controller.setInverted(TalonFXInvertType.CounterClockwise);
+    return Controller;
+  }
+
+  /**
+   * Configure a {@link com.ctre.phoenix.motorcontrol.can.WPI_TalonFX WPI_TalonFX} translation controller to swerve module specifications
+   * @param Controller - Controller that is to be configured
+   * @param CurrentLimit - The current limit configuration of the motor's stator.
+   * @return A copy of the configured controller
+   */
+  public static WPI_TalonFX configureTranslationController(final WPI_TalonFX Controller,final StatorCurrentLimitConfiguration CurrentLimit) {
+    Controller.configFactoryDefault();
+    Controller.setInverted(TalonFXInvertType.CounterClockwise);
+    Controller.setNeutralMode(NeutralMode.Brake);
+    Controller.configStatorCurrentLimit(CurrentLimit);
+    Controller.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    Controller.setSelectedSensorPosition((0.0));
+    Controller.enableVoltageCompensation((true));
+    return Controller;
+  }
+
+  /**
+   * Configure a {@link com.ctre.phoenix.sensors.CANCoder CANCoder} azimuth encoder to swerve module specifications
+   * @param AzimuthEncoder - Encoder that is to be configured
+   * @param Offset - The starting encoder's offset
+   * @return A copy of the configured encoder
+   */
+  public static WPI_CANCoder configureRotationEncoder(final WPI_CANCoder AzimuthEncoder, final Double Offset) {
+    AzimuthEncoder.configFactoryDefault();
+    AzimuthEncoder.configMagnetOffset(Offset);
+    AzimuthEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
+    AzimuthEncoder.setPositionToAbsolute();
+    return AzimuthEncoder;
+  }
+
+  /**
+   * Configure a {@link com.revrobotics.CANSparkMax CANSparkMax} translation controller to swerve module specifications
+   * @param Controller - Controller that is to be configured
+   * @param AmpLimit - The current limit of the controller measured in amps
+   * @param NominalVoltage - The nominal voltage to compensate output of the controller to compensate voltage for
+   * @return A copy of the configured controller
+   */
+  public static CANSparkMax configureTranslationController(final CANSparkMax Controller, final Integer AmpLimit, Double NominalVoltage) {
+    Controller.restoreFactoryDefaults();
+    Controller.setSmartCurrentLimit(AmpLimit);
+    Controller.enableVoltageCompensation(NominalVoltage);
+    Controller.setInverted((true));
+    Controller.setIdleMode(IdleMode.kBrake);
+    Controller.burnFlash();
+    return Controller;
+  }
+
+  /**
+   * Configure a {@link com.revrobotics.CANSparkMax CANSparkMax} rotation controller to swerve module specifications
+   * @param Controller - Controller that is to be configured
+   * @param AmpLimit - The current limit of the controller measured in amps
+   * @param NominalVoltage - The nominal voltage to compensate output of the controller to compensate voltage for
+   * @return A copy of the configured controller
+   */
+  public static CANSparkMax configureRotationController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage ) {
+    Controller.restoreFactoryDefaults();
+    Controller.setSmartCurrentLimit(AmpLimit);
+    Controller.enableVoltageCompensation(NominalVoltage);
+    Controller.setInverted((true));
+    Controller.setIdleMode(IdleMode.kBrake);
+    Controller.burnFlash();
+    return Controller;
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   /**
