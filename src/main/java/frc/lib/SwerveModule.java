@@ -3,7 +3,7 @@ package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -201,16 +201,16 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   }
 
   /**
-   * Post measurement data to a shuffleboard tab
-   * @param Tab - Tab to post on
+   * Post measurement, output, and demand data to shuffleboard static  instance
    */
-  public void post(final ShuffleboardTab Tab) {
-    Tab.add("DEMAND ROTATION (Rad.)", Demand.angle.getRadians());
-    Tab.add("DEMAND VELOCITY (m/s)",Demand.speedMetersPerSecond);
-    Tab.add("MEASURED ROTATION (Rad.)",getPosition());
-    Tab.add("MEASURED VELOCITY", getVelocity());
-    Tab.add("OUTPUT ROTATION [-1,1]",ROTATION_CONTROLLER.get());
-    Tab.add("OUTPUT VELOCITY [-1,1]",TRANSLATION_CONTROLLER.get());
+  public void post(final Integer ModuleNumber) {
+    var Prefix = ("MODULE [") + ModuleNumber + ("] ");
+    SmartDashboard.putNumber(Prefix + "DEMAND ROTATION (Rad.)", Demand.angle.getRadians());
+    SmartDashboard.putNumber(Prefix + "DEMAND VELOCITY (m/s)",Demand.speedMetersPerSecond);
+    SmartDashboard.putNumber(Prefix + "MEASURED ROTATION (Rad.)",getPosition().getRadians());
+    SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getVelocity());
+    SmartDashboard.putNumber(Prefix + "OUTPUT ROTATION [-1,1]",ROTATION_CONTROLLER.get());
+    SmartDashboard.putNumber(Prefix + "OUTPUT VELOCITY [-1,1]",TRANSLATION_CONTROLLER.get());
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   /**

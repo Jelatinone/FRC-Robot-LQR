@@ -6,29 +6,33 @@ import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import java.util.concurrent.atomic.AtomicReference;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.auto.PIDConstants;
-import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.server.PathPlannerServer;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import edu.wpi.first.math.geometry.Translation2d;
+import com.pathplanner.lib.PathPlannerTrajectory;
+import edu.wpi.first.wpilibj2.command.Subsystem;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.geometry.Rotation2d;
+import com.pathplanner.lib.auto.PIDConstants;
 import java.util.function.BooleanSupplier;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.util.Units;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.SwerveModule;
 import java.util.stream.*;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 // -------------------------------------------------------[Drivebase Subsystem Class]-------------------------------------------------------//
-//TODO Pathplanner Integeration, Limelight Measurement Pose Estimation
-public final class DrivebaseSubsystem extends SubsystemBase {
+//TODO Pathplanner Integeration, Limelight Measurement Pose Estimation, Configurations
+public final class DrivebaseSubsystem extends SubsystemBase implements AutoCloseable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   private static transient DrivebaseSubsystem INSTANCE;
 
@@ -40,10 +44,10 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       .stream().parallel();
 
   private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
-    new Translation2d(Values.ROBOT_WIDTH/2, Values.ROBOT_WIDTH/2),
-    new Translation2d(Values.ROBOT_WIDTH/2, -Values.ROBOT_WIDTH/2),
-    new Translation2d(-Values.ROBOT_WIDTH/2, Values.ROBOT_WIDTH/2),
-    new Translation2d(-Values.ROBOT_WIDTH/2, -Values.ROBOT_WIDTH/2)
+    new Translation2d((Values.Chassis.ROBOT_WIDTH)/2, (Values.Chassis.ROBOT_WIDTH)/2),
+    new Translation2d((Values.Chassis.ROBOT_WIDTH)/2, -(Values.Chassis.ROBOT_WIDTH)/2),
+    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/2, (Values.Chassis.ROBOT_WIDTH)/2),
+    new Translation2d(-(Values.Chassis.ROBOT_WIDTH)/2, -(Values.Chassis.ROBOT_WIDTH)/2)
   );
 
   private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(
@@ -60,7 +64,7 @@ public final class DrivebaseSubsystem extends SubsystemBase {
   private static Double TimeInterval = 0.0;
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private DrivebaseSubsystem() {
-    PathPlannerServer.startServer(Values.PATHPLANNER_SERVER_PORT);
+    PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
   @Override
@@ -74,9 +78,19 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       IntervalTime = (0.02);
     }
     FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(),getModulePositions()));
+    AtomicReference<Integer> ModuleNumber = new AtomicReference<Integer>(0);
+    MODULES.forEach(
+    (Module) -> {
+      Module.post(ModuleNumber.get()); 
+      ModuleNumber.set(ModuleNumber.get() + 1);
+    });
   }
 
-  public static synchronized void reset(Pose2d FieldRelativePose) {
+  public void accept(final SwerveModuleState[] Demand) {
+    set(Arrays.asList(Demand),() -> false);
+  }
+
+  public synchronized void reset(Pose2d FieldRelativePose) {
     POSE_ESTIMATOR.resetPosition(
     Hardware.GYROSCOPE.getRotation2d(),    
     getModulePositions(),
@@ -86,26 +100,33 @@ public final class DrivebaseSubsystem extends SubsystemBase {
   public static synchronized void stop() {
     MODULES.forEach((MODULE) -> MODULE.stop());
   }
-  // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
+
+  public void close() {
+    MODULES.close();;
+    FIELD.close();
+  }
+  // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
   public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, BooleanSupplier ControlType) {
-    var Demand = KINEMATICS.toSwerveModuleStates((FieldOriented)?
-      (ChassisSpeeds.fromFieldRelativeSpeeds(
-        Translation_X,
-        Translation_Y,
-        Orientation,
-        Hardware.GYROSCOPE.getRotation2d())):
-      (new ChassisSpeeds(
-        Translation_X,
-        Translation_Y,
-        Orientation))
-    );
-    set(Arrays.asList(Demand),ControlType);
+    var Demand = Stream.of(KINEMATICS.toSwerveModuleStates((FieldOriented)?
+    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X,Translation_Y,Orientation,Hardware.GYROSCOPE.getRotation2d())):
+    (new ChassisSpeeds(Translation_X,Translation_Y,Orientation))));
+    Demand.forEach(
+      (State) -> 
+        State.speedMetersPerSecond = (((State.speedMetersPerSecond * 60) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / 600));
+    set(Demand.toList(),ControlType);
   }
 
   public static synchronized void set(final List<SwerveModuleState> Demand, BooleanSupplier ControlType) {
-    SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.MAXIMUM_VELOCITY);
+    SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.Limit.ROBOT_MAXIMUM_VELOCITY);
     MODULES.forEach((Module) -> {
       Module.set(() -> Demand.iterator().next(), ControlType);
+    });
+  }
+
+  public static synchronized void set(final List<SwerveModuleState> Demand) {
+    SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.Limit.ROBOT_MAXIMUM_VELOCITY);
+    MODULES.forEach((Module) -> {
+      Module.set(() -> Demand.iterator().next(), () -> false);
     });
   }
 
@@ -118,13 +139,6 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       ,() -> false);
   }
 
-  public static synchronized void set(final List<SwerveModuleState> Demand) {
-    SwerveDriveKinematics.desaturateWheelSpeeds((SwerveModuleState[])Demand.toArray(),Values.MAXIMUM_VELOCITY);
-    MODULES.forEach((Module) -> {
-      Module.set(() -> Demand.iterator().next(), () -> false);
-    });
-  }
-
   public static void setFieldOriented(final Boolean isFieldOriented) {
     FieldOriented = isFieldOriented;
   }
@@ -133,24 +147,25 @@ public final class DrivebaseSubsystem extends SubsystemBase {
     FieldOriented = !FieldOriented;
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
-  public static synchronized Command getAutonomousCommand(final AutonomousTrajectory Trajectory) {
+  public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory CompoundTrajectory, final HashMap<String,Command> EventMap, final Boolean IsBlue) {
     MODULES.forEach((Module) -> Module.reset());
     return new SwerveAutoBuilder(
-      POSE_ESTIMATOR::getEstimatedPosition,
-      Pose -> reset(Pose),
+      INSTANCE,
+      INSTANCE::reset,
       KINEMATICS,
-      new PIDConstants((0.0), (0.0), (0.0)),
-      new PIDConstants((0.0), (0.0), (0.0)), 
-      Demand -> set(Arrays.asList(Demand)), 
-      (null), //TODO: Event Map from Autonomous Trajectory
+      new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD),
+      new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), 
+      INSTANCE, 
+      (EventMap),
       (true),
-      (Subsystem) INSTANCE).fullAuto(new PathPlannerTrajectory()); //TODO: Constraints from Autonomous Trajectory
+      (Subsystem) INSTANCE
+    ).fullAuto(CompoundTrajectory);
   }
 
   public static SwerveModulePosition[] getModulePositions() {
     return (SwerveModulePosition[])MODULES.map(
       (Module) -> 
-        new SwerveModulePosition((Values.SCALE_FACTOR*(Module.getVelocity()) * Values.DRIVETRAIN_GEAR_RATIO * Values.WHEEL_PERIMETER), Module.getPosition()))
+        new SwerveModulePosition((Values.ComponentData.SCALE_FACTOR*(Module.getVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER), Module.getPosition()))
           .collect(Collectors.toList())
           .toArray();
   }
@@ -164,5 +179,9 @@ public final class DrivebaseSubsystem extends SubsystemBase {
       INSTANCE = new DrivebaseSubsystem();
     }
     return INSTANCE;
+  }
+
+  public Pose2d get() {
+    return POSE_ESTIMATOR.getEstimatedPosition();
   }
 }
