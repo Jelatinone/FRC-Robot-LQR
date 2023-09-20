@@ -1,6 +1,7 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot.subsystems.drivebase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
+
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
@@ -48,9 +49,8 @@ public final class Constants {
       public static final Double ROBOT_WIDTH = (0.6858);         
     }
 
-    public static final class Limit {
-      public static final Double ROBOT_MAXIMUM_ACCELERATION = (4.0);    
-      public static final Double ROBOT_MAXIMUM_VELOCITY = (15.0);    
+    public static final class Limit {   
+      public static final Double ROBOT_MAXIMUM_VELOCITY = (5.4);    
     }
 
     public static final class Port {
@@ -282,6 +282,4 @@ public final class Constants {
         }    
     }    
   }
-
-
 }
