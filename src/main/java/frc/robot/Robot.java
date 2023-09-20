@@ -3,12 +3,15 @@ package frc.robot;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.net.PortForwarder;
 // ---------------------------------------------------------------[Robot Class]-------------------------------------------------------------//
 public final class Robot extends TimedRobot {
   // ---------------------------------------------------------------[Robot]-----------------------------------------------------------------//
   @Override
   public void robotInit() {
-    //TODO: Multi-Limelight Enabled Port Forwarding
+    for (Integer ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
+      PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
+    }
   }
 
   @Override
