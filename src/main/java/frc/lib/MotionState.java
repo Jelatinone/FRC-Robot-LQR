@@ -1,9 +1,10 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-import edu.wpi.first.math.interpolation.Interpolatable;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.interpolation.Interpolatable;
+
 import java.util.Optional;
 
 // ----------------------------------------------------------[Motion State Class]-----------------------------------------------------------//
@@ -25,19 +26,19 @@ public final class MotionState implements Interpolatable<MotionState>, Cloneable
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   /**
    * The mechanism's real velocity or translation in three-dimensional space; may or may not exist upon creation of this state.
-   * @see {@link java.util.Optional Optional} 
+   * @see java.util.Optional
    */
   public final Translation3d TRANSLATION;  
   /**
    * The mechanism's real position or rotation in three-dimensional space;  may or may not exist upon creation of this state.
-   * @see {@link java.util.Optional Optional} 
+   * @see java.util.Optional
    */
   public final Rotation3d ROTATION;
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   /**
    * Constructs a new MotionState
-   * @param Translation - An optional value which may or may not exist descriibing three dimensional translation in space.
-   * @param Rotation - An optional value which may or may not exist descriibing three dimensional rotation in space.
+   * @param Translation - An optional value which may or may not exist describing three-dimensional translation in space.
+   * @param Rotation - An optional value which may or may not exist describing three-dimensional rotation in space.
    */
   public MotionState(final Optional<Translation3d> Translation, final Optional<Rotation3d> Rotation) {
     this.TRANSLATION = (Translation.isPresent())? (new Translation3d(Double.NaN, Double.NaN, Double.NaN)): (Translation.get());
@@ -45,8 +46,8 @@ public final class MotionState implements Interpolatable<MotionState>, Cloneable
   }
   /**
    * Constructs a new MotionState
-   * @param Translation - An optional value which does exist descriibing three dimensional translation in space.
-   * @param Rotation - An optional value which does exist descriibing three dimensional rotation in space.
+   * @param Translation - An optional value which does exist describing three-dimensional translation in space.
+   * @param Rotation - An optional value which does exist describing three-dimensional rotation in space.
    */
   public MotionState(final Translation3d Translation, final Rotation3d Rotation) {
     this.TRANSLATION = Translation;

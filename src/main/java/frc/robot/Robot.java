@@ -9,7 +9,7 @@ public final class Robot extends TimedRobot {
   // ---------------------------------------------------------------[Robot]-----------------------------------------------------------------//
   @Override
   public void robotInit() {
-    for (Integer ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
+    for (int ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
       PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
     }
   }
@@ -45,8 +45,7 @@ public final class Robot extends TimedRobot {
   @Override
   public void disabledExit() {
 
-  }  
-
+  }
   // ------------------------------------------------------------[Autonomous]---------------------------------------------------------------//  
   @Override
   public void autonomousInit() {
@@ -64,7 +63,7 @@ public final class Robot extends TimedRobot {
 
   }
 
-  // --------------------------------------------------------------[Teleop]-----------------------------------------------------------------//
+  // -----------------------------------------------------------[Teleoperated]--------------------------------------------------------------//
   @Override
   public void teleopInit() {
 

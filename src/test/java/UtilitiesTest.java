@@ -8,28 +8,28 @@ import org.junit.jupiter.api.Test;
 public final class UtilitiesTest {
 
   @Test
-  static void CheckErrorCTRE() {
-    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.GeneralError, ""));
-    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.FirmVersionCouldNotBeRetrieved, ""));
-    assertDoesNotThrow(() -> CheckCTRECode(ErrorCode.OK, ""));
+  void CheckErrorCTRE() {
+    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.GeneralError));
+    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.FirmVersionCouldNotBeRetrieved));
+    assertDoesNotThrow(() -> CheckCTRECode(ErrorCode.OK));
   }
 
-  static void CheckCTRECode(final ErrorCode errorCode, final String message) {
+  static void CheckCTRECode(final ErrorCode errorCode) {
       if (errorCode != ErrorCode.OK) {
-        System.out.println(String.format("%s: %s", message, errorCode.toString()));
+        System.out.printf("%s: %s%n", "", errorCode.toString());
     }
   }
 
   @Test
-  static void CheckErrorREV() {
-    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kError, ""));
-    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kCantFindFirmware, ""));
-    assertDoesNotThrow(() -> CheckREVLibCode(REVLibError.kOk, ""));
+  void CheckErrorREV() {
+    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kError));
+    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kCantFindFirmware));
+    assertDoesNotThrow(() -> CheckREVLibCode(REVLibError.kOk));
   }
 
-  static void CheckREVLibCode(final REVLibError error, final String message) {
+  static void CheckREVLibCode(final REVLibError error) {
     if (error != REVLibError.kOk) {
-        throw new RuntimeException(String.format("%s: %s", message, error.toString()));
+        throw new RuntimeException(String.format("%s: %s", "", error.toString()));
     }
   }
 }

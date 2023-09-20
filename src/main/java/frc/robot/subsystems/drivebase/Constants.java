@@ -1,24 +1,26 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot.subsystems.drivebase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.math.controller.LinearQuadraticRegulator;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.system.plant.LinearSystemId;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.math.estimator.KalmanFilter;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.system.LinearSystem;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.util.Units;
-import edu.wpi.first.math.numbers.*;
-import java.util.function.Supplier;
 import edu.wpi.first.math.Nat;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.LinearQuadraticRegulator;
+import edu.wpi.first.math.estimator.KalmanFilter;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N2;
+import edu.wpi.first.math.system.LinearSystem;
+import edu.wpi.first.math.system.LinearSystemLoop;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import frc.lib.SwerveModule;
+
+import java.util.function.Supplier;
 
 // ------------------------------------------------------------[Constants Class]------------------------------------------------------------//
 public final class Constants {
@@ -67,7 +69,7 @@ public final class Constants {
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
-            public static final Double MAXIMM_AZIMUTH_VELOCITY = (5.4);              
+            public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (1.0); //TODO <---- Find Acceleration Gain (kA) of Linear Position System, Volts/(Units/Sec^2) 
             public static final Double VELOCITY_GAIN = (1.0); //TODO <---- Find Velocity Gain (kV) of Linear Position System, Volts/(Units/Sec)
@@ -96,24 +98,24 @@ public final class Constants {
       
 
           public static final class Control {
-            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
+            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
-            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<N2,N1,N1>(
-              PLANT,
-              new LinearQuadraticRegulator<>(
-                PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()),Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), //<---- Controller error weight, how much we want to conserve controller error, or how accurate we want to be, increased time to target
-                VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), //<---- Controller effort weight, how much we want to conserve controller expenditure or how fast we want to be; increased state error
-                Values.DISCRETIZATION_TIMESTEP),
-              new KalmanFilter<>(
-                Nat.N2(),
-                Nat.N1(),
-                PLANT, 
-                VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES),Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)), //<---- How accurate we think our models are
-                VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1/Values.ENCODER_SENSITIVITY)), //<---- How accurate we think our encoders are
-                Values.DISCRETIZATION_TIMESTEP),
-              Values.MAXIMUM_AZIMUTH_VOLTAGE,
-              Values.DISCRETIZATION_TIMESTEP);        
+            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
+                    PLANT,
+                    new LinearQuadraticRegulator<>(
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), //<---- Controller error weight, how much we want to conserve controller error, or how accurate we want to be, increased time to target
+                            VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), //<---- Controller effort weight, how much we want to conserve controller expenditure or how fast we want to be; increased state error
+                            Values.DISCRETIZATION_TIMESTEP),
+                    new KalmanFilter<>(
+                            Nat.N2(),
+                            Nat.N1(),
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES), Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)), //<---- How accurate we think our models are
+                            VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1 / Values.ENCODER_SENSITIVITY)), //<---- How accurate we think our encoders are
+                            Values.DISCRETIZATION_TIMESTEP),
+                    Values.MAXIMUM_AZIMUTH_VOLTAGE,
+                    Values.DISCRETIZATION_TIMESTEP);
           }
         }
         public static final class FR_Module {
@@ -121,7 +123,7 @@ public final class Constants {
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
-            public static final Double MAXIMM_AZIMUTH_VELOCITY = (5.4);              
+            public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (1.0);
             public static final Double VELOCITY_GAIN = (1.0);
@@ -150,24 +152,24 @@ public final class Constants {
       
 
           public static final class Control {
-            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
+            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
-            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<N2,N1,N1>(
-              PLANT,
-              new LinearQuadraticRegulator<>(
-                PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()),Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), 
-                VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
-                Values.DISCRETIZATION_TIMESTEP),
-              new KalmanFilter<>(
-                Nat.N2(),
-                Nat.N1(),
-                PLANT, 
-                VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES),Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)), 
-                VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1/Values.ENCODER_SENSITIVITY)), 
-                Values.DISCRETIZATION_TIMESTEP),
-              Values.MAXIMUM_AZIMUTH_VOLTAGE,
-              Values.DISCRETIZATION_TIMESTEP);        
+            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
+                    PLANT,
+                    new LinearQuadraticRegulator<>(
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                            VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    new KalmanFilter<>(
+                            Nat.N2(),
+                            Nat.N1(),
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES), Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)),
+                            VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1 / Values.ENCODER_SENSITIVITY)),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    Values.MAXIMUM_AZIMUTH_VOLTAGE,
+                    Values.DISCRETIZATION_TIMESTEP);
           }
         }
         public static final class RL_Module {
@@ -175,7 +177,7 @@ public final class Constants {
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
-            public static final Double MAXIMM_AZIMUTH_VELOCITY = (5.4);              
+            public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (1.0);
             public static final Double VELOCITY_GAIN = (1.0);
@@ -204,24 +206,24 @@ public final class Constants {
       
 
           public static final class Control {
-            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
+            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
-            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<N2,N1,N1>(
-              PLANT,
-              new LinearQuadraticRegulator<>(
-                PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()),Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), 
-                VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
-                Values.DISCRETIZATION_TIMESTEP),
-              new KalmanFilter<>(
-                Nat.N2(),
-                Nat.N1(),
-                PLANT, 
-                VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES),Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)), 
-                VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1/Values.ENCODER_SENSITIVITY)), 
-                Values.DISCRETIZATION_TIMESTEP),
-              Values.MAXIMUM_AZIMUTH_VOLTAGE,
-              Values.DISCRETIZATION_TIMESTEP);        
+            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
+                    PLANT,
+                    new LinearQuadraticRegulator<>(
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                            VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    new KalmanFilter<>(
+                            Nat.N2(),
+                            Nat.N1(),
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES), Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)),
+                            VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1 / Values.ENCODER_SENSITIVITY)),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    Values.MAXIMUM_AZIMUTH_VOLTAGE,
+                    Values.DISCRETIZATION_TIMESTEP);
           }
         }
         public static final class RR_Module {
@@ -229,7 +231,7 @@ public final class Constants {
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
-            public static final Double MAXIMM_AZIMUTH_VELOCITY = (5.4);              
+            public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (1.0);
             public static final Double VELOCITY_GAIN = (1.0);
@@ -258,24 +260,24 @@ public final class Constants {
       
 
           public static final class Control {
-            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
+            public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
-            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<N2,N1,N1>(
-              PLANT,
-              new LinearQuadraticRegulator<>(
-                PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()),Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), 
-                VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
-                Values.DISCRETIZATION_TIMESTEP),
-              new KalmanFilter<>(
-                Nat.N2(),
-                Nat.N1(),
-                PLANT, 
-                VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES),Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)), 
-                VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1/Values.ENCODER_SENSITIVITY)), 
-                Values.DISCRETIZATION_TIMESTEP),
-              Values.MAXIMUM_AZIMUTH_VOLTAGE,
-              Values.DISCRETIZATION_TIMESTEP);        
+            public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
+                    PLANT,
+                    new LinearQuadraticRegulator<>(
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                            VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    new KalmanFilter<>(
+                            Nat.N2(),
+                            Nat.N1(),
+                            PLANT,
+                            VecBuilder.fill(Units.degreesToRadians(Values.MODEL_VELOCITY_ACCURACY_DEGREES), Units.rotationsPerMinuteToRadiansPerSecond(Values.MODEL_POSITION_ACCURACY_RPM)),
+                            VecBuilder.fill(Units.rotationsPerMinuteToRadiansPerSecond(1 / Values.ENCODER_SENSITIVITY)),
+                            Values.DISCRETIZATION_TIMESTEP),
+                    Values.MAXIMUM_AZIMUTH_VOLTAGE,
+                    Values.DISCRETIZATION_TIMESTEP);
           }
         }    
     }    

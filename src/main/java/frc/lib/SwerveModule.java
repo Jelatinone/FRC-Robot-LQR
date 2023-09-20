@@ -1,23 +1,24 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
-import java.util.function.BooleanSupplier;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.VecBuilder;
-import java.util.function.Consumer;
+import edu.wpi.first.math.system.LinearSystemLoop;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.Timer;
-import java.util.function.Supplier;
+import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+
 import java.io.Closeable;
+import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 // -----------------------------------------------------------[Motion Module Class]---------------------------------------------------------//
 /**
@@ -31,7 +32,7 @@ import java.io.Closeable;
  * has the capability to move in any direction. </p>
  * 
  * <p> SwerveModules can consume a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} as a demand, and computes
- * the nesscessary voltage using a {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} control loop. <p>
+ * the necessary voltage using a {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} control loop. <p>
  * 
  * @author Cody Washington (Jelatinone)
  */
@@ -45,17 +46,16 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   private final Supplier<SwerveModuleState> STATE_SENSOR; 
 
   // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
-  private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();   
-  private TrapezoidProfile.State TargetPositionState = new TrapezoidProfile.State();   
-  private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();  
+  private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
+  private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();
   private SwerveModuleState Demand = new SwerveModuleState();
   private Double TimeReference = (0.0);
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   /**
    * Constructor.
-   * @param TranslationController - The motor controller(s) responsible for controlling linear translation (velocity); querried with {@link #setVelocity(VelocitySupplier, isOpenLoop)}
-   * @param RotationController  - The motor controller(s) responsible for controlling azimuth rotation (position); querried with {@link #setPosition(RotationSupplier)}
+   * @param TranslationController - The motor controller(s) responsible for controlling linear translation (velocity); queried with {@link #setVelocity(Supplier, Supplier)}
+   * @param RotationController  - The motor controller(s) responsible for controlling azimuth rotation (position); queried with {@link #setPosition(Supplier)}
    * @param StateSensor - The sum all collected sensor(s) data into a single {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} supplier
    * @param MaximumTranslationVelocity - The constraints supplier placed on the Translation Controller which determine maximum velocity output
    * @param RotationMotionConstraints - The constraint supplier placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
@@ -73,13 +73,14 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   }
   /**
    * Constructor.
-   * @param TranslationController - The motor controller(s) responsible for controlling linear translation (velocity); querried with {@link #setVelocity(VelocitySupplier, isOpenLoop)}
-   * @param RotationController  - The motor controller(s) responsible for controlling azimuth rotation (position); querried with {@link #setPosition(RotationSupplier)}
+   * @param TranslationController - The motor controller(s) responsible for controlling linear translation (velocity); queried with {@link #setVelocity(Supplier, Supplier)}
+   * @param RotationController  - The motor controller(s) responsible for controlling azimuth rotation (position); queried with {@link #setPosition(Supplier)}
    * @param StateSensor - The sum all collected sensor(s) data into a single {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} supplier
    * @param MaximumTranslationVelocity - The constraints placed on the Translation Controller which determine maximum velocity output
    * @param RotationMotionConstraints - The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
    * @param MotionControlLoop - The control loop responsible for controller azimuth output
    */
+  @SuppressWarnings("unused")
   public SwerveModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor,
     final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints,  LinearSystemLoop<N2,N1,N1> MotionControlLoop)  {
     MAXIMUM_TRANSLATIONAL_VELOCITY = () -> MaximumTranslationVelocity;      
@@ -93,12 +94,13 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
   /**
    * Set the translation (linear velocity) controller to meet a specified demand using a control type
-   * @param Demand - The specified demand as a translation in two dimensional space in meters / second
-   * @param ControlType - The type of control of meeting the demand, whether or not it is open loop.
+   * @param Demand - The specified demand as a translation in two-dimensional space in meters / second
+   * @param ControlType - The type of control of meeting the demand, whether it is open loop.
    */
+  @SuppressWarnings("all")
   public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
     var TranslationDemand = Demand.get();
-    if(TranslationDemand != null & TranslationDemand != Double.NaN) {
+    if(TranslationDemand != null & !Double.isNaN(TranslationDemand)) {
       if(ControlType.get()) {
         TRANSLATION_CONTROLLER.set(TranslationDemand / MAXIMUM_TRANSLATIONAL_VELOCITY.get());
       } else {
@@ -109,12 +111,14 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
 
   /**
    * Set the rotation (position velocity) controller to meet a specified demand using a control type
-   * @param Demand - The specified demand as a rotation in two dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
+   * @param Demand - The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
    */
+
+  @SuppressWarnings("all")
   public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
     Rotation2d RotationDemand = Demand.get();
-    if(RotationDemand != null & RotationDemand.getRadians() != Double.NaN) {
-      Double IntervalTime;
+    if(RotationDemand != null & !Double.isNaN(RotationDemand.getRadians())) {
+      double IntervalTime;
       if(TimeReference != (0)) {
         var RealTime = Timer.getFPGATimestamp();
         IntervalTime = RealTime - TimeReference;
@@ -123,8 +127,8 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
         IntervalTime = (0.02);
       }
       TrapezoidProfile.Constraints SystemConstraints = ROTATIONAL_MOTION_CONSTRAINTS.get();
-      TargetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
-      TargetPositionStateReference = new TrapezoidProfile(SystemConstraints,TargetPositionState,TargetPositionStateReference).calculate(IntervalTime);
+      TrapezoidProfile.State targetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
+      TargetPositionStateReference = new TrapezoidProfile(SystemConstraints, targetPositionState,TargetPositionStateReference).calculate(IntervalTime);
       MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position,TargetPositionStateReference.velocity);
       MOTION_CONTROL_LOOP.correct(VecBuilder.fill(STATE_SENSOR.get().angle.getRadians()));
       MOTION_CONTROL_LOOP.predict(IntervalTime);
@@ -133,23 +137,24 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   }
 
   /**
-   * Set the controllers to meet rotation, and translation demans packaged as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}
+   * Set the controllers to meet rotation, and translation demands packaged as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}
    * @param Demand - The specified demand as a {@link frc.lib.MotionState MotionState} that has translation and rotation in three-dimensional space
-   * @param ControlType - The type of control of meeting the velocity demand, whether or not it is open loop.
+   * @param ControlType - The type of control of meeting the velocity demand, whether it is open loop.
    */
+  @SuppressWarnings("unused")
   public synchronized void set(final Supplier<MotionState> Demand, final Supplier<Boolean> ControlType) {
     var DemandState = Demand.get();
     set(() -> new SwerveModuleState(new Translation2d(DemandState.TRANSLATION.getX(), DemandState.TRANSLATION.getY()).getNorm(),
-              new Rotation2d(Demand.get().ROTATION.getX(), Demand.get().ROTATION.getY())), () -> ControlType.get());
+              new Rotation2d(Demand.get().ROTATION.getX(), Demand.get().ROTATION.getY())), ControlType::get);
   } 
   /**
-   * Set the controllers to meet rotation, and translation demans packaged as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}
-   * @param Demand - The specified demand as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}, or translation (velocity) as a {@link java.lang.Double Double}},
+   * Set the controllers to meet rotation, and translation demands packaged as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}
+   * @param StateDemand - The specified demand as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}, or translation (velocity) as a {@link java.lang.Double Double}},
    *  and Rotation as radians in a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
-   * @param ControlType - The type of control of meeting the velocity demand, whether or not it is open loop.
+   * @param ControlType - The type of control of meeting the velocity demand, whether it is open loop.
    */
-  public synchronized void set(final Supplier<SwerveModuleState> Demand, final BooleanSupplier ControlType) {
-    Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(Demand.get(), getPosition());
+  public synchronized void set(final Supplier<SwerveModuleState> StateDemand, final BooleanSupplier ControlType) {
+    Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(StateDemand.get(), getPosition());
     TargetStateCommand.cancel();
     TargetStateCommand = new ParallelCommandGroup(
       new InstantCommand(() -> 
@@ -157,9 +162,10 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
       ),
       new InstantCommand(() -> {
         SwerveModuleState DemandState = OptimizedDemand.get();
-        setVelocity(() -> DemandState.speedMetersPerSecond, () ->  ControlType.getAsBoolean());
+        setVelocity(() -> DemandState.speedMetersPerSecond, ControlType::getAsBoolean);
       }));
     TargetStateCommand.repeatedly().schedule();
+    Demand = OptimizedDemand.get();
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
   /**
@@ -184,7 +190,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   }
 
   /**
-   * Stop all of the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveStateSupplier, ControlType)} to call again.
+   * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(Supplier, BooleanSupplier)} to call again.
    */
   public void stop() {
     TargetStateCommand.cancel();
@@ -193,7 +199,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
   }  
 
   /**
-   * Consume a SwerveModuleState as shorthand for calling {@link #set(SwerveStateSupplier, ControlType)}
+   * Consume a SwerveModuleState as shorthand for calling {@link #set(Supplier, BooleanSupplier)}
    * @param Demand - The 
    */
   public void accept(final SwerveModuleState Demand) {
@@ -223,7 +229,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
 
   /**
    * Get the current position (rotation) in radians as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
-   * @return A quantatative representation of the angle of the module
+   * @return A quantitative representation of the angle of the module
    */
   public Rotation2d getPosition() {
     return STATE_SENSOR.get().angle;
@@ -231,7 +237,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
 
   /**
    * Get the current velocity (translation) in m/s as a {@link java.lang.Double Double}
-   * @return A quantatative representation of the angle of the module
+   * @return A quantitative representation of the angle of the module
    */
   public Double getVelocity() {
     return STATE_SENSOR.get().speedMetersPerSecond;
