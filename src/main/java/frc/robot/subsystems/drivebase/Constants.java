@@ -20,7 +20,7 @@ import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import frc.lib.SwerveModule;
+import frc.lib.DrivebaseModule;
 
 import java.util.function.Supplier;
 
@@ -92,13 +92,13 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder AZIMUTH_SENSOR = SwerveModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = SwerveModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = SwerveModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                                 
+            public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
+            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
+            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                                 
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final SwerveModule MODULE = new SwerveModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -147,13 +147,13 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder AZIMUTH_SENSOR = SwerveModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = SwerveModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = SwerveModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                              
+            public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
+            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
+            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                              
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final SwerveModule MODULE = new SwerveModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -202,13 +202,13 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder AZIMUTH_SENSOR = SwerveModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = SwerveModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = SwerveModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                             
+            public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
+            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
+            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                             
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final SwerveModule MODULE = new SwerveModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -257,13 +257,13 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder AZIMUTH_SENSOR = SwerveModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = SwerveModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = SwerveModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                         
+            public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
+            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
+            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                         
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final SwerveModule MODULE = new SwerveModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 

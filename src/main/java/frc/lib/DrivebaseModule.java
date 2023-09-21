@@ -1,6 +1,7 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
+
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -30,13 +31,12 @@ import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
 
-// -----------------------------------------------------------[Motion Module Class]---------------------------------------------------------//
+// ------------------------------------------------------------[Drive Module Class]---------------------------------------------------------//
 /**
  * 
  * 
- * <h1> SwerveModule </h1>
+ * <h1> DriveModule </h1>
  * 
- * <p> A state is made up of a three dimensional {@link edu.wpi.first.math.geometry.Translation3d Translation}, and a three dimensional 
  * <p> Represents an {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} based approach to a individual swerve
  * module; a module that has full control over both the translation (velocity), and rotation(position) of it's wheel. Meaning that it
  * has the capability to move in any direction. </p>
@@ -46,7 +46,7 @@ import com.revrobotics.CANSparkMax.IdleMode;
  * 
  * @author Cody Washington (@Jelatinone)
  */
-public final class SwerveModule implements Closeable, Consumer<SwerveModuleState> {
+public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleState> {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   private final Supplier<TrapezoidProfile.Constraints> ROTATIONAL_MOTION_CONSTRAINTS;
   private final Supplier<Double> MAXIMUM_TRANSLATIONAL_VELOCITY;  
@@ -71,7 +71,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param RotationMotionConstraints - The constraint supplier placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
    * @param MotionControlLoop - The control loop responsible for controller azimuth output
    */
-  public SwerveModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor,
+  public DrivebaseModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor,
     final Supplier<Double> MaximumTranslationVelocity, final Supplier<TrapezoidProfile.Constraints> RotationMotionConstraints,  LinearSystemLoop<N2,N1,N1> MotionControlLoop) {
     MAXIMUM_TRANSLATIONAL_VELOCITY = MaximumTranslationVelocity;      
     ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;     
@@ -90,8 +90,8 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param RotationMotionConstraints - The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
    * @param MotionControlLoop - The control loop responsible for controller azimuth output
    */
-  @SuppressWarnings("unused")
-  public SwerveModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor,
+  @SuppressWarnings("unused, null")
+  public DrivebaseModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor,
     final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints,  LinearSystemLoop<N2,N1,N1> MotionControlLoop)  {
     MAXIMUM_TRANSLATIONAL_VELOCITY = () -> MaximumTranslationVelocity;      
     ROTATIONAL_MOTION_CONSTRAINTS =  () -> RotationMotionConstraints;     
@@ -99,7 +99,6 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
     ROTATION_CONTROLLER = RotationController;
     MOTION_CONTROL_LOOP = MotionControlLoop;
     STATE_SENSOR = StateSensor;
-
   }
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
   /**
@@ -151,7 +150,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param Demand - The specified demand as a {@link frc.lib.MotionState MotionState} that has translation and rotation in three-dimensional space
    * @param ControlType - The type of control of meeting the velocity demand, whether it is open loop.
    */
-  @SuppressWarnings("unused")
+  @SuppressWarnings("unused, null")
   public synchronized void set(final Supplier<MotionState> Demand, final Supplier<Boolean> ControlType) {
     var DemandState = Demand.get();
     set(() -> new SwerveModuleState(new Translation2d(DemandState.TRANSLATION.getX(), DemandState.TRANSLATION.getY()).getNorm(),
@@ -234,7 +233,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param Controller - Controller that is to be configured
    * @param AzimuthEncoder - Azimuth CANCoder instance acting as a feedback filter reference point, and an azimuth sensor position source
    * @param CurrentLimit - The current limit configuration of the motor's stator.
-   * @param Deadband - Desired percent deabdand of controller inputs
+   * @param Deadband - Desired percent deadband of controller inputs
    * @return A copy of the configured controller
    */
   public static WPI_TalonFX configureRotationController(final WPI_TalonFX Controller, final WPI_CANCoder AzimuthEncoder, final StatorCurrentLimitConfiguration CurrentLimit, final Double Deadband) {
@@ -289,6 +288,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param NominalVoltage - The nominal voltage to compensate output of the controller to compensate voltage for
    * @return A copy of the configured controller
    */
+  @SuppressWarnings("unused, unchecked")
   public static CANSparkMax configureTranslationController(final CANSparkMax Controller, final Integer AmpLimit, Double NominalVoltage) {
     Controller.restoreFactoryDefaults();
     Controller.setSmartCurrentLimit(AmpLimit);
@@ -306,6 +306,7 @@ public final class SwerveModule implements Closeable, Consumer<SwerveModuleState
    * @param NominalVoltage - The nominal voltage to compensate output of the controller to compensate voltage for
    * @return A copy of the configured controller
    */
+  @SuppressWarnings("unused, unchecked")
   public static CANSparkMax configureRotationController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage ) {
     Controller.restoreFactoryDefaults();
     Controller.setSmartCurrentLimit(AmpLimit);

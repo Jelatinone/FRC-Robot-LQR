@@ -3,6 +3,7 @@ package frc.robot;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.net.PortForwarder;
 // ---------------------------------------------------------------[Robot Class]-------------------------------------------------------------//
 public final class Robot extends TimedRobot {
@@ -49,7 +50,7 @@ public final class Robot extends TimedRobot {
   // ------------------------------------------------------------[Autonomous]---------------------------------------------------------------//  
   @Override
   public void autonomousInit() {
-
+    Shuffleboard.startRecording();
   }
 
 
@@ -60,13 +61,13 @@ public final class Robot extends TimedRobot {
 
   @Override
   public void autonomousExit() {
-
+    Shuffleboard.stopRecording();
   }
 
   // -----------------------------------------------------------[Teleoperated]--------------------------------------------------------------//
   @Override
   public void teleopInit() {
-
+    Shuffleboard.startRecording();
   }
 
   @Override
@@ -76,8 +77,8 @@ public final class Robot extends TimedRobot {
 
   @Override
   public void teleopExit() {
-
-  }   
+    Shuffleboard.stopRecording();
+  }     
 
   // ---------------------------------------------------------------[Test]------------------------------------------------------------------//
   @Override
