@@ -58,7 +58,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
     private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();
-    private SwerveModuleState Demand = new SwerveModuleState();
+    private SwerveModuleState DemandState = new SwerveModuleState();
     private Double TimeReference = (0.0);
 
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
@@ -169,7 +169,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      * @param ControlType The type of control of meeting the velocity demand, whether it is open loop.
      */
     public synchronized void set(final SwerveModuleState StateDemand, final BooleanSupplier ControlType) {
-        Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(StateDemand, getPosition());
+        Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(StateDemand, getMeasuredPosition());
         TargetStateCommand.cancel();
         TargetStateCommand = new ParallelCommandGroup(
         new InstantCommand(() -> 
@@ -179,7 +179,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
             setVelocity(() -> DemandState.speedMetersPerSecond, ControlType::getAsBoolean);
         }));
         TargetStateCommand.repeatedly().schedule();
-        Demand = OptimizedDemand.get();
+        DemandState = OptimizedDemand.get();
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
@@ -227,18 +227,18 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      */
     public void post(final Integer ModuleNumber) {
         var Prefix = ("Module [") + ModuleNumber + ("]/");
-        SmartDashboard.putNumber(Prefix + "DEMAND ROTATION (Rad.)", Demand.angle.getRadians());
-        SmartDashboard.putNumber(Prefix + "DEMAND VELOCITY (m/s)", Demand.speedMetersPerSecond);
+        SmartDashboard.putNumber(Prefix + "DEMAND ROTATION (Rad.)", DemandState.angle.getRadians());
+        SmartDashboard.putNumber(Prefix + "DEMAND VELOCITY (m/s)", DemandState.speedMetersPerSecond);
         SmartDashboard.putNumber(Prefix + "DEMAND ROTATION PER SECOND (Rad./s",TargetPositionStateReference.velocity);
-        SmartDashboard.putNumber(Prefix + "MEASURED ROTATION (Rad.)", getPosition().getRadians());
-        SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getVelocity());
+        SmartDashboard.putNumber(Prefix + "MEASURED ROTATION (Rad.)", getMeasuredPosition().getRadians());
+        SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getMeasuredVelocity());
         SmartDashboard.putNumber(Prefix + "OUTPUT ROTATION [-1,1]", ROTATION_CONTROLLER.get());
         SmartDashboard.putNumber(Prefix + "OUTPUT VELOCITY [-1,1]", TRANSLATION_CONTROLLER.get());
-        LOGGGER.recordOutput(Prefix + "DemandAzimuthPosition", Demand.angle.getDegrees());
+        LOGGGER.recordOutput(Prefix + "DemandAzimuthPosition", DemandState.angle.getDegrees());
         LOGGGER.recordOutput(Prefix + "DemandAzimuthPositionVelocity", TargetPositionStateReference.velocity);
-        LOGGGER.recordOutput(Prefix + "DemandTranslationVelocity", Demand.speedMetersPerSecond);
-        LOGGGER.recordOutput(Prefix + "MeasuredAzimuthRotation", getPosition().getDegrees());
-        LOGGGER.recordOutput(Prefix + "MeasuredTranslationVelocity", getVelocity());
+        LOGGGER.recordOutput(Prefix + "DemandTranslationVelocity", DemandState.speedMetersPerSecond);
+        LOGGGER.recordOutput(Prefix + "MeasuredAzimuthRotation", getMeasuredPosition().getDegrees());
+        LOGGGER.recordOutput(Prefix + "MeasuredTranslationVelocity", getMeasuredVelocity());
         LOGGGER.recordOutput(Prefix + "OutputAzimuthPercent", ROTATION_CONTROLLER.get());
         LOGGGER.recordOutput(Prefix + "OutputTranslationPercent", TRANSLATION_CONTROLLER.get());
     }
@@ -343,7 +343,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} representation of the module's motion
      */
-    public SwerveModuleState getModuleState() {
+    public SwerveModuleState getMeasuredModuleState() {
         return STATE_SENSOR.get();
     }
 
@@ -352,7 +352,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A quantitative representation of the angle of the module
      */
-    public Rotation2d getPosition() {
+    public Rotation2d getMeasuredPosition() {
         return STATE_SENSOR.get().angle;
     }
 
@@ -361,7 +361,53 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A quantitative representation of the angle of the module
      */
-    public Double getVelocity() {
+    public Double getMeasuredVelocity() {
         return STATE_SENSOR.get().speedMetersPerSecond;
     }
+
+    /**
+     * Get the current state of the module as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}.
+     *
+     * @return A {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} representation of the module's motion
+     */
+    public SwerveModuleState getDemandModuleState() {
+        return DemandState;
+    }
+
+    /**
+     * Get the current position (rotation) in radians as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
+     *
+     * @return A quantitative representation of the angle of the module
+     */
+    public Rotation2d getDemandPosition() {
+        return DemandState.angle;
+    }
+
+    /**
+     * Get the current velocity (translation) in m/s as a {@link java.lang.Double Double}
+     *
+     * @return A quantitative representation of the angle of the module
+     */
+    public Double getDemandVelocity() {
+        return DemandState.speedMetersPerSecond;
+    }
+
+    /**
+     * Get the current percent output [-1,1] of the position(Rotation of Rotational controller)
+     * 
+     * @return A quantative representation of the module's rotation percent output
+     */
+    public Double getRotationalhOuput() {
+        return ROTATION_CONTROLLER.get();
+    }
+
+    /**
+     * Get the current percent output [-1,1] of the translation(Velocity of Translation controller)
+     * 
+     * @return A quantative representation of the module's translation percent output
+     */
+    public Double getTrnaslationalOutput() {
+        return TRANSLATION_CONTROLLER.get();
+    }
+
 }

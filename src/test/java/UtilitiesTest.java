@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.revrobotics.REVLibError;
 import com.ctre.phoenix.ErrorCode;
 import org.junit.jupiter.api.Test;
-// ------------------------------------------------------------[Motor Test Class]-----------------------------------------------------------//
+// ------------------------------------------------------------[Utility Test Class]---------------------------------------------------------//
 public final class UtilitiesTest {
 
   @Test

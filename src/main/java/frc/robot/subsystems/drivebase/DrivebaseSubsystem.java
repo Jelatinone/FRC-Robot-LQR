@@ -221,7 +221,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModulePosition SwerveModulePosition}
      */
     public static SwerveModulePosition[] getModulePositions() {
-        return (SwerveModulePosition[]) MODULES.map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getPosition())).toArray();
+        return (SwerveModulePosition[]) MODULES.map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray();
     }
 
     /**
@@ -231,7 +231,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     @SuppressWarnings("unused")
     public static SwerveModuleState[] getModuleStates() {
-        return (SwerveModuleState[]) MODULES.map(DrivebaseModule::getModuleState).toArray();
+        return (SwerveModuleState[]) MODULES.map(DrivebaseModule::getMeasuredModuleState).toArray();
     }
 
     /**
