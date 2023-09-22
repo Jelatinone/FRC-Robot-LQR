@@ -16,7 +16,8 @@ public final class UtilitiesTest {
 
   static void CheckCTRECode(final ErrorCode errorCode) {
       if (errorCode != ErrorCode.OK) {
-        System.out.printf("%s: %s%n", "", errorCode.toString());
+        throw new RuntimeException(String.format("%s: %s%n", "", errorCode.toString()));
+        
     }
   }
 
