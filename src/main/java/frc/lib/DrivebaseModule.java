@@ -108,7 +108,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     @SuppressWarnings("unused")
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
-        if (TranslationDemand != null & !Double.isNaN((TranslationDemand == null) ? (Double.NaN) : (TranslationDemand))) {
+        if (TranslationDemand != null & !Double.isNaN((TranslationDemand == null) ? (0.0) : (TranslationDemand))) {
             if (ControlType.get()) {
                 TRANSLATION_CONTROLLER.set(TranslationDemand / MAXIMUM_TRANSLATIONAL_VELOCITY.get());
             } else {

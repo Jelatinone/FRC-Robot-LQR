@@ -41,8 +41,8 @@ public final class MotionState implements Interpolatable<MotionState>, Cloneable
    * @param Rotation - An optional value which may or may not exist describing three-dimensional rotation in space.
    */
   public MotionState(final Optional<Translation3d> Translation, final Optional<Rotation3d> Rotation) {
-    this.TRANSLATION = (Translation.isPresent())? (new Translation3d(Double.NaN, Double.NaN, Double.NaN)): (Translation.get());
-    this.ROTATION = (Rotation.isPresent())? (new Rotation3d(Double.NaN, Double.NaN, Double.NaN)): (Rotation.get());
+    this.TRANSLATION = (Translation.isPresent())? (new Translation3d((0.0), (0.0), (0.0))): (Translation.get());
+    this.ROTATION = (Rotation.isPresent())? (new Rotation3d((0.0), (0.0), (0.0))): (Rotation.get());
   }
   /**
    * Constructs a new MotionState
@@ -58,8 +58,8 @@ public final class MotionState implements Interpolatable<MotionState>, Cloneable
    * Construct a new value-less MotionState
    */
   public MotionState() {
-    this.TRANSLATION = new Translation3d(Double.NaN, Double.NaN, Double.NaN);
-    this.ROTATION = new Rotation3d(Double.NaN, Double.NaN, Double.NaN);
+    this.TRANSLATION = new Translation3d((0.0), (0.0), (0.0));
+    this.ROTATION = new Rotation3d((0.0), (0.0), (0.0));
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
