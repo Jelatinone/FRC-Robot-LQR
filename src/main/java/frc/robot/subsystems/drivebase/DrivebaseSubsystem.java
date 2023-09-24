@@ -1,35 +1,38 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot.subsystems.drivebase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-
+import com.pathplanner.lib.server.PathPlannerServer;
+import com.pathplanner.lib.auto.SwerveAutoBuilder;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.auto.PIDConstants;
-import com.pathplanner.lib.auto.SwerveAutoBuilder;
-import com.pathplanner.lib.server.PathPlannerServer;
+
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Pose2d;
+
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.lib.DrivebaseModule;
 
-import java.io.Closeable;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
+import java.io.Closeable;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Objects;
+import java.util.List;
+
+import frc.lib.DrivebaseModule;
 
 import static frc.robot.Constants.LOGGER;
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
@@ -43,7 +46,7 @@ import static frc.robot.subsystems.drivebase.Constants.Values;
  *
  *
  * <p> {@link frc.robot.subsystems.drivebase.Constants Constants} based implementation of swerve drivebase which utilizes
- * {@link frc.lib.DrivebaseModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
+ * {@link frc.lib.MotionModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
  * accurate azimuth positioning. This subsystem is entirely static, meaning only one instance will exist and this Instance is obtained
  * by calling {@link #getInstance()} from a static context. </p>
  *
@@ -51,7 +54,7 @@ import static frc.robot.subsystems.drivebase.Constants.Values;
  */
 public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static DrivebaseSubsystem INSTANCE;
+    private static DrivebaseSubsystem INSTANCE = (null);
 
     private static final Stream<DrivebaseModule> MODULES = Stream.of(Hardware.Modules.FL_Module.Components.MODULE, Hardware.Modules.FR_Module.Components.MODULE, Hardware.Modules.RL_Module.Components.MODULE, Hardware.Modules.RR_Module.Components.MODULE).parallel();
 
@@ -60,6 +63,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(KINEMATICS, Hardware.GYROSCOPE.getRotation2d(), getModulePositions(), new Pose2d());
 
     private static final Field2d FIELD = new Field2d();
+
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
@@ -141,9 +145,13 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @param ControlType   Whether to use OpenLoop control
      */
     public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, BooleanSupplier ControlType) {
-        var Demand = (List.of(KINEMATICS.toSwerveModuleStates((FieldOriented) ? (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())) : (new ChassisSpeeds(Translation_X, Translation_Y, Orientation)))));
-        Demand.forEach((State) -> State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
-        set(Demand, ControlType);
+        if(Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0))) {
+            set();
+        } else {
+            var Demand = (List.of(KINEMATICS.toSwerveModuleStates((FieldOriented) ? (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())) : (new ChassisSpeeds(Translation_X, Translation_Y, Orientation)))));
+            Demand.forEach((State) -> State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
+            set(Demand, ControlType);            
+        }
     }
 
     /**
@@ -240,7 +248,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return Static {@link frc.robot.subsystems.drivebase.DrivebaseSubsystem DrivebaseSubsystem} instance
      */
     public static synchronized DrivebaseSubsystem getInstance() {
-        if (java.util.Objects.equals(INSTANCE, (null))) {
+        if(java.util.Objects.isNull(INSTANCE)) {
             INSTANCE = new DrivebaseSubsystem();
         }
         return INSTANCE;
