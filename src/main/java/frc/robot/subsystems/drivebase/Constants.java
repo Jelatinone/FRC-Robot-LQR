@@ -103,13 +103,15 @@ public final class Constants {
       
 
           public static final class Control {
+            public static final Double AZIMUTH_EPSILON_POSITION = Components.AZIMUTH_SENSOR.getAbsolutePosition();
+            public static final Double AZIMUTH_EPSILON_VELOCITY = Components.AZIMUTH_SENSOR.getVelocity();
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
               PLANT,
               new LinearQuadraticRegulator<>(
                 PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())), //<---- Controller error weight, how much we want to conserve controller error, or how accurate we want to be, increased time to target
+                VecBuilder.fill(Units.degreesToRadians((AZIMUTH_EPSILON_POSITION > 0)? (AZIMUTH_EPSILON_POSITION): (1.0)), Units.rotationsPerMinuteToRadiansPerSecond((AZIMUTH_EPSILON_VELOCITY > 0)? (AZIMUTH_EPSILON_VELOCITY): (1.0))), //<---- Controller error weight, how much we want to conserve controller error, or how accurate we want to be, increased time to target
                 VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), //<---- Controller effort weight, how much we want to conserve controller expenditure or how fast we want to be; increased state error
                 Values.DISCRETIZATION_TIMESTEP),
               new KalmanFilter<>(
@@ -158,13 +160,15 @@ public final class Constants {
       
 
           public static final class Control {
+            public static final Double AZIMUTH_EPSILON_POSITION = Components.AZIMUTH_SENSOR.getAbsolutePosition();
+            public static final Double AZIMUTH_EPSILON_VELOCITY = Components.AZIMUTH_SENSOR.getVelocity();
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
               PLANT,
               new LinearQuadraticRegulator<>(
                 PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                VecBuilder.fill(Units.degreesToRadians((AZIMUTH_EPSILON_POSITION > 0)? (AZIMUTH_EPSILON_POSITION): (1.0)), Units.rotationsPerMinuteToRadiansPerSecond((AZIMUTH_EPSILON_VELOCITY > 0)? (AZIMUTH_EPSILON_VELOCITY): (1.0))),
                 VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), 
                 Values.DISCRETIZATION_TIMESTEP),
               new KalmanFilter<>(
@@ -213,13 +217,15 @@ public final class Constants {
       
 
           public static final class Control {
+            public static final Double AZIMUTH_EPSILON_POSITION = Components.AZIMUTH_SENSOR.getAbsolutePosition();
+            public static final Double AZIMUTH_EPSILON_VELOCITY = Components.AZIMUTH_SENSOR.getVelocity();
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
               PLANT,
               new LinearQuadraticRegulator<>(
                 PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                VecBuilder.fill(Units.degreesToRadians((AZIMUTH_EPSILON_POSITION > 0)? (AZIMUTH_EPSILON_POSITION): (1.0)), Units.rotationsPerMinuteToRadiansPerSecond((AZIMUTH_EPSILON_VELOCITY > 0)? (AZIMUTH_EPSILON_VELOCITY): (1.0))),
                 VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), 
                 Values.DISCRETIZATION_TIMESTEP),
               new KalmanFilter<>(
@@ -268,13 +274,15 @@ public final class Constants {
       
 
           public static final class Control {
+            public static final Double AZIMUTH_EPSILON_POSITION = Components.AZIMUTH_SENSOR.getAbsolutePosition();
+            public static final Double AZIMUTH_EPSILON_VELOCITY = Components.AZIMUTH_SENSOR.getVelocity();
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.MAXIMUM_AZIMUTH_VELOCITY, Values.MAXIMUM_AZIMUTH_ACCELERATION);
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.VELOCITY_GAIN, Values.ACCELERATION_GAIN);        
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(
               PLANT,
               new LinearQuadraticRegulator<>(
                 PLANT,
-                VecBuilder.fill(Units.degreesToRadians(Components.AZIMUTH_SENSOR.getAbsolutePosition()), Units.rotationsPerMinuteToRadiansPerSecond(Components.AZIMUTH_SENSOR.getVelocity())),
+                VecBuilder.fill(Units.degreesToRadians((AZIMUTH_EPSILON_POSITION > 0)? (AZIMUTH_EPSILON_POSITION): (1.0)), Units.rotationsPerMinuteToRadiansPerSecond((AZIMUTH_EPSILON_VELOCITY > 0)? (AZIMUTH_EPSILON_VELOCITY): (1.0))),
                 VecBuilder.fill(Values.MAXIMUM_AZIMUTH_VOLTAGE), 
                 Values.DISCRETIZATION_TIMESTEP),
               new KalmanFilter<>(
