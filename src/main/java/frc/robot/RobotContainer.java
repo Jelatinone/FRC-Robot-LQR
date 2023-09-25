@@ -17,9 +17,9 @@ public final class RobotContainer {
       new InstantCommand(() -> {
       var Profile = Profiles.JOHN_DOE.PROFILE;
       DrivebaseSubsystem.set(
-        (Double)Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_HORIZONTAL_INPUT)),
-        (Double)Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_VERTICAL_INPUT)),
-        (Double)Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.ORIENTATION_INPUT)),
+        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_HORIZONTAL_INPUT)),
+        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_VERTICAL_INPUT)),
+        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.ORIENTATION_INPUT)),
         () -> false);
       }));
   }
@@ -30,6 +30,7 @@ public final class RobotContainer {
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   public static synchronized RobotContainer getInstance() {
     if(java.util.Objects.isNull(INSTANCE)) {
+      //noinspection InstantiationOfUtilityClass
       INSTANCE = new RobotContainer();
     }
     return INSTANCE;

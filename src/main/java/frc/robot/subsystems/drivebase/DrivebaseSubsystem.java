@@ -46,7 +46,7 @@ import static frc.robot.subsystems.drivebase.Constants.Values;
  *
  *
  * <p> {@link frc.robot.subsystems.drivebase.Constants Constants} based implementation of swerve drivebase which utilizes
- * {@link frc.lib.MotionModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
+ * {@link frc.lib.DrivebaseModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
  * accurate azimuth positioning. This subsystem is entirely static, meaning only one instance will exist and this Instance is obtained
  * by calling {@link #getInstance()} from a static context. </p>
  *
@@ -96,7 +96,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
             Module.post(ModuleNumber.get());
             ModuleNumber.set(ModuleNumber.get() + (1));
         });
-        LOGGER.recordOutput(("Drivebase/ReponseTime"),IntervalTime);        
+        LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
     }

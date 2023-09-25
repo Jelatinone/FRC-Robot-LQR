@@ -32,14 +32,14 @@ public final class Robot extends LoggedRobot  {
   // ---------------------------------------------------------------[Robot]-----------------------------------------------------------------//
   @Override
   public void robotInit() {
-    LOGGER.recordMetadata(("ProjectName"), ("PROJECT-LIQOURICE"));
+    LOGGER.recordMetadata(("ProjectName"), ("PROJECT-LIQUORICE"));
     if (isReal()) {
       LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
       LOGGER.addDataReceiver(new NT4Publisher());
       LoggedPowerDistribution.getInstance((0), ModuleType.kAutomatic);
     } else {
       if(Constants.AdvantageKit.REPLAY_FROM_LOG) {
-        setUseTiming((false));
+        setUseTiming(TURBO_MODE);
         String logPath = LogFileUtil.findReplayLog();
         LOGGER.setReplaySource(new WPILOGReader(logPath));
         LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
@@ -51,7 +51,7 @@ public final class Robot extends LoggedRobot  {
     HashMap<String,Integer> CommandInstanceCount = new HashMap<>();
     BiConsumer<Command, Boolean> CommandFunctionLogger = (Command Operation, Boolean Active) -> {
       String OperationName = Operation.getName();
-      Integer Count = CommandInstanceCount.getOrDefault(OperationName, (0)) + ((Active)? (1): (-1));
+      int Count = CommandInstanceCount.getOrDefault(OperationName, (0)) + ((Active)? (1): (-1));
       CommandInstanceCount.put(OperationName,Count);
       LOGGER.recordOutput("UniqueOperations/" + OperationName + "_" + Integer.toHexString(Operation.hashCode()), Active);
       LOGGER.recordOutput("Operations/" + OperationName, Count > 0);
@@ -76,8 +76,8 @@ public final class Robot extends LoggedRobot  {
       ClientNames.add(Connection.remote_id);
       ClientAddresses.add(Connection.remote_ip);
     });
-    LOGGER.recordOutput(("NTClient/Names"), ClientNames.toArray(new String[ClientNames.size()]));
-    LOGGER.recordOutput(("NTClient/Addresses"), ClientAddresses.toArray(new String[ClientAddresses.size()]));
+    LOGGER.recordOutput(("NTClient/Names"), ClientNames.toArray(new String[0]));
+    LOGGER.recordOutput(("NTClient/Addresses"), ClientAddresses.toArray(new String[0]));
     Threads.setCurrentThreadPriority((true), (20));
   }
 

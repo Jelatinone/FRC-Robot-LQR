@@ -35,7 +35,7 @@ import org.littletonrobotics.junction.Logger;
 // ------------------------------------------------------------[Drive Module Class]---------------------------------------------------------//
 
 /**
- * <h1> DriveModule </h1>
+ * <h1> DrivebaseModule </h1>
  *
  * <p> Represents an {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} based approach to a individual swerve
  * module; a module that has full control over both the translation (velocity), and rotation(position) of it's wheel. Meaning that it
@@ -48,7 +48,7 @@ import org.littletonrobotics.junction.Logger;
  */
 public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleState> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static final Logger LOGGGER = Logger.getInstance();
+    private static final Logger LOGGER = Logger.getInstance();
     private final Supplier<TrapezoidProfile.Constraints> ROTATIONAL_MOTION_CONSTRAINTS;
     private final Supplier<Double> MAXIMUM_TRANSLATIONAL_VELOCITY;
     private final LinearSystemLoop<N2, N1, N1> MOTION_CONTROL_LOOP;
@@ -205,7 +205,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     }
 
     /**
-     * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(Supplier, BooleanSupplier)} to call again.
+     * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveModuleState, BooleanSupplier)} to call again.
      */
     public void stop() {
         TargetStateCommand.cancel();
@@ -214,7 +214,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     }
 
     /**
-     * Consume a SwerveModuleState as shorthand for calling {@link #set(Supplier, BooleanSupplier)}
+     * Consume a SwerveModuleState as shorthand for calling {@link #set(SwerveModuleState, BooleanSupplier), with false as a ControlType}
      *
      * @param Demand The desired state for the module to achieve
      */
@@ -234,13 +234,13 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
         SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getMeasuredVelocity());
         SmartDashboard.putNumber(Prefix + "OUTPUT ROTATION [-1,1]", ROTATION_CONTROLLER.get());
         SmartDashboard.putNumber(Prefix + "OUTPUT VELOCITY [-1,1]", TRANSLATION_CONTROLLER.get());
-        LOGGGER.recordOutput(Prefix + "DemandAzimuthPosition", DemandState.angle.getDegrees());
-        LOGGGER.recordOutput(Prefix + "DemandAzimuthPositionVelocity", TargetPositionStateReference.velocity);
-        LOGGGER.recordOutput(Prefix + "DemandTranslationVelocity", DemandState.speedMetersPerSecond);
-        LOGGGER.recordOutput(Prefix + "MeasuredAzimuthRotation", getMeasuredPosition().getDegrees());
-        LOGGGER.recordOutput(Prefix + "MeasuredTranslationVelocity", getMeasuredVelocity());
-        LOGGGER.recordOutput(Prefix + "OutputAzimuthPercent", ROTATION_CONTROLLER.get());
-        LOGGGER.recordOutput(Prefix + "OutputTranslationPercent", TRANSLATION_CONTROLLER.get());
+        LOGGER.recordOutput(Prefix + "DemandAzimuthPosition", DemandState.angle.getDegrees());
+        LOGGER.recordOutput(Prefix + "DemandAzimuthPositionVelocity", TargetPositionStateReference.velocity);
+        LOGGER.recordOutput(Prefix + "DemandTranslationVelocity", DemandState.speedMetersPerSecond);
+        LOGGER.recordOutput(Prefix + "MeasuredAzimuthRotation", getMeasuredPosition().getDegrees());
+        LOGGER.recordOutput(Prefix + "MeasuredTranslationVelocity", getMeasuredVelocity());
+        LOGGER.recordOutput(Prefix + "OutputAzimuthPercent", ROTATION_CONTROLLER.get());
+        LOGGER.recordOutput(Prefix + "OutputTranslationPercent", TRANSLATION_CONTROLLER.get());
     }
 
     /**
@@ -370,6 +370,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} representation of the module's motion
      */
+    @SuppressWarnings("unused")
     public SwerveModuleState getDemandModuleState() {
         return DemandState;
     }
@@ -379,6 +380,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A quantitative representation of the angle of the module
      */
+    @SuppressWarnings("unused")
     public Rotation2d getDemandPosition() {
         return DemandState.angle;
     }
@@ -388,6 +390,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *
      * @return A quantitative representation of the angle of the module
      */
+    @SuppressWarnings("unused")
     public Double getDemandVelocity() {
         return DemandState.speedMetersPerSecond;
     }
@@ -395,18 +398,20 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     /**
      * Get the current percent output [-1,1] of the position(Rotation of Rotational controller)
      * 
-     * @return A quantative representation of the module's rotation percent output
+     * @return A quantitative representation of the module's rotation percent output
      */
-    public Double getRotationalhOuput() {
+    @SuppressWarnings("unused")
+    public Double getRotationalOutput() {
         return ROTATION_CONTROLLER.get();
     }
 
     /**
      * Get the current percent output [-1,1] of the translation(Velocity of Translation controller)
      * 
-     * @return A quantative representation of the module's translation percent output
+     * @return A quantitative representation of the module's translation percent output
      */
-    public Double getTrnaslationalOutput() {
+    @SuppressWarnings("unused")
+    public Double getTranslationalOutput() {
         return TRANSLATION_CONTROLLER.get();
     }
 
