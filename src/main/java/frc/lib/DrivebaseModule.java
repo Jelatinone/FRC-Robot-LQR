@@ -1,40 +1,37 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-
-import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
+import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import com.ctre.phoenix.sensors.SensorInitializationStrategy;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
-import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMax.IdleMode;
-import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.numbers.N1;
-import edu.wpi.first.math.numbers.N2;
-import edu.wpi.first.math.system.LinearSystemLoop;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.wpilibj.Timer;
+import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-
-import java.io.Closeable;
-import java.util.function.BooleanSupplier;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.math.system.LinearSystemLoop;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.util.sendable.*;
+import edu.wpi.first.math.numbers.*;
+import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-
+import java.io.Closeable;
 import org.littletonrobotics.junction.Logger;
 
 // ------------------------------------------------------------[Drive Module Class]---------------------------------------------------------//
-
 /**
+ * 
+ * 
  * <h1> DrivebaseModule </h1>
  *
  * <p> Represents an {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} based approach to a individual swerve
@@ -46,15 +43,17 @@ import org.littletonrobotics.junction.Logger;
  *
  * @author Cody Washington (@Jelatinone)
  */
-public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleState> {
+public final class DrivebaseModule implements Closeable, Sendable, Consumer<SwerveModuleState>  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static final Logger LOGGER = Logger.getInstance();
     private final Supplier<TrapezoidProfile.Constraints> ROTATIONAL_MOTION_CONSTRAINTS;
     private final Supplier<Double> MAXIMUM_TRANSLATIONAL_VELOCITY;
     private final LinearSystemLoop<N2, N1, N1> MOTION_CONTROL_LOOP;
     private final MotorControllerGroup TRANSLATION_CONTROLLER;
     private final MotorControllerGroup ROTATION_CONTROLLER;
     private final Supplier<SwerveModuleState> STATE_SENSOR;
+    private final Integer REFERENCE_NUMBER;
+    private static final Logger LOGGER = Logger.getInstance();
+    private static Integer INSTANCE_COUNT = 0;    
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
     private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();
@@ -80,7 +79,9 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
         ROTATION_CONTROLLER = RotationController;
         MOTION_CONTROL_LOOP = MotionControlLoop;
         STATE_SENSOR = StateSensor;
-
+        REFERENCE_NUMBER = INSTANCE_COUNT;
+        INSTANCE_COUNT++;
+        SendableRegistry.addLW(this, "DrivebaseModule", REFERENCE_NUMBER);
     }
 
     /**
@@ -158,7 +159,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
         new Translation2d(DemandState.TRANSLATION.getX(),
           DemandState.TRANSLATION.getY()).getNorm(),
         new Rotation2d(Demand.get().ROTATION.getX(),
-          Demand.get().ROTATION.getY())), ControlType::get);
+          Demand.get().ROTATION.getY())), ControlType);
     }
 
     /**
@@ -168,7 +169,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      *                    and Rotation as radians in a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      * @param ControlType The type of control of meeting the velocity demand, whether it is open loop.
      */
-    public synchronized void set(final SwerveModuleState StateDemand, final BooleanSupplier ControlType) {
+    public synchronized void set(final SwerveModuleState StateDemand, final Supplier<Boolean> ControlType) {
         Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(StateDemand, getMeasuredPosition());
         TargetStateCommand.cancel();
         TargetStateCommand = new ParallelCommandGroup(
@@ -176,7 +177,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
             setPosition(() -> new Rotation2d(OptimizedDemand.get().angle.getRadians()))),
          new InstantCommand(() -> {
             SwerveModuleState DemandState = OptimizedDemand.get();
-            setVelocity(() -> DemandState.speedMetersPerSecond, ControlType::getAsBoolean);
+            setVelocity(() -> DemandState.speedMetersPerSecond, ControlType);
         }));
         TargetStateCommand.repeatedly().schedule();
         DemandState = OptimizedDemand.get();
@@ -199,13 +200,16 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
      * Close the held resources within the module, module is no longer usable after this operation.
      */
     public synchronized void close() {
+        SendableRegistry.remove(this);
+        TRANSLATION_CONTROLLER.stopMotor();
+        ROTATION_CONTROLLER.stopMotor();
         TRANSLATION_CONTROLLER.close();
         ROTATION_CONTROLLER.close();
         TargetStateCommand.cancel();
     }
 
     /**
-     * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveModuleState, BooleanSupplier)} to call again.
+     * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveModuleState, Supplier)} to call again.
      */
     public void stop() {
         TargetStateCommand.cancel();
@@ -214,7 +218,7 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     }
 
     /**
-     * Consume a SwerveModuleState as shorthand for calling {@link #set(SwerveModuleState, BooleanSupplier), with false as a ControlType}
+     * Consume a SwerveModuleState as shorthand for calling {@link #set(SwerveModuleState, Supplier), with false as a ControlType}
      *
      * @param Demand The desired state for the module to achieve
      */
@@ -222,11 +226,21 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
         set(Demand, () -> false);
     }
 
+    @Override
+    public void initSendable(SendableBuilder Builder) {
+        Builder.setSmartDashboardType("DrivebaseModule");
+        Builder.addDoubleProperty(("Translation Velocity"), this::getMeasuredVelocity, (Demand) -> setVelocity(() -> Demand, () -> false));
+        Builder.addDoubleProperty(("Translation Output"), this::getTranslationalOutput, null);
+        Builder.addDoubleProperty(("Rotation Position"), () -> getMeasuredPosition().getRadians(), (Demand) -> setPosition(() -> new Rotation2d(Demand)));
+        Builder.addDoubleProperty(("Rotation Velocity"), () -> TargetPositionStateReference.velocity, (null));
+        Builder.addDoubleProperty(("Rotation Output"), this::getRotationalOutput, null);
+    }
+
     /**
      * Post measurement, output, and demand data to shuffleboard static  instance
      */
-    public void post(final Integer ModuleNumber) {
-        var Prefix = ("Module [") + ModuleNumber + ("]/");
+    public void post() {
+        var Prefix = ("Module [") + REFERENCE_NUMBER + ("]/");
         SmartDashboard.putNumber(Prefix + "DEMAND ROTATION (Rad.)", DemandState.angle.getRadians());
         SmartDashboard.putNumber(Prefix + "DEMAND VELOCITY (m/s)", DemandState.speedMetersPerSecond);
         SmartDashboard.putNumber(Prefix + "DEMAND ROTATION PER SECOND (Rad./s",TargetPositionStateReference.velocity);
@@ -414,5 +428,4 @@ public final class DrivebaseModule implements Closeable, Consumer<SwerveModuleSt
     public Double getTranslationalOutput() {
         return TRANSLATION_CONTROLLER.get();
     }
-
 }

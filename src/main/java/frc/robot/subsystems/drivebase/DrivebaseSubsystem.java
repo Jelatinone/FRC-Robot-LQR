@@ -15,14 +15,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Pose2d;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
@@ -39,9 +38,9 @@ import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
 
 // -------------------------------------------------------[Drivebase Subsystem Class]-------------------------------------------------------//
-//TODO CompletePathplanner Integration, Limelight Measurement Pose Estimation
-
 /**
+ * 
+ * 
  * <h1> DrivebaseSubsystem </h1>
  *
  *
@@ -91,11 +90,12 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
             IntervalTime = (0.02);
         }
         FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()));
-        AtomicReference<Integer> ModuleNumber = new AtomicReference<>(1);
-        MODULES.forEach((Module) -> {
-            Module.post(ModuleNumber.get());
-            ModuleNumber.set(ModuleNumber.get() + (1));
-        });
+        MODULES.forEach(DrivebaseModule::post);
+        var FieldPose = FIELD.getRobotPose();
+        SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
+        SmartDashboard.putNumber(("Drivetrain/Translation"),FieldPose.getTranslation().getNorm());
+        SmartDashboard.putNumber(("Drivetrain/Rotation"),FieldPose.getRotation().getDegrees());
+        SmartDashboard.putNumber(("Drivetrain/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
@@ -120,7 +120,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     }
 
     /**
-     * Ceases all drivebase motion immediately, can be called again immediately with {@link #set(List, BooleanSupplier)}
+     * Ceases all drivebase motion immediately, can be called again immediately with {@link #set(List, Supplier)}
      */
     @SuppressWarnings("unused")
     public static synchronized void stop() {
@@ -144,13 +144,13 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @param Orientation   The desired rotation of the front face
      * @param ControlType   Whether to use OpenLoop control
      */
-    public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, BooleanSupplier ControlType) {
+    public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, Supplier<Boolean> ControlType) {
         if(Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0))) {
             set();
         } else {
-            var Demand = (List.of(KINEMATICS.toSwerveModuleStates((FieldOriented) ? (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())) : (new ChassisSpeeds(Translation_X, Translation_Y, Orientation)))));
-            Demand.forEach((State) -> State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
-            set(Demand, ControlType);            
+            set((List.of(KINEMATICS.toSwerveModuleStates((FieldOriented)?
+                    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())) :
+                    (new ChassisSpeeds(Translation_X, Translation_Y, Orientation))))), ControlType);
         }
     }
 
@@ -160,8 +160,10 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @param Demand      Module state demands
      * @param ControlType Whether to use OpenLoop control
      */
-    public static synchronized void set(final List<SwerveModuleState> Demand, BooleanSupplier ControlType) {
+    public static synchronized void set(final List<SwerveModuleState> Demand, Supplier<Boolean> ControlType) {
         var DemandIterator = Demand.iterator();
+        Demand.forEach((State) ->
+                State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
         SwerveDriveKinematics.desaturateWheelSpeeds(Demand.toArray(SwerveModuleState[]::new), Values.Limit.ROBOT_MAXIMUM_VELOCITY);
         MODULES.forEach((Module) -> Module.set(DemandIterator.next(), ControlType));
         LOGGER.recordOutput(("Drivebase/Demand"), Demand.toArray(SwerveModuleState[]::new));
@@ -229,7 +231,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModulePosition SwerveModulePosition}
      */
     public static SwerveModulePosition[] getModulePositions() {
-        return (SwerveModulePosition[]) MODULES.map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray();
+        return MODULES.map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray(SwerveModulePosition[]::new);
     }
 
     /**
@@ -239,7 +241,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     @SuppressWarnings("unused")
     public static SwerveModuleState[] getModuleStates() {
-        return (SwerveModuleState[]) MODULES.map(DrivebaseModule::getMeasuredModuleState).toArray();
+        return MODULES.map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**

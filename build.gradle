@@ -52,6 +52,8 @@ configurations.all {
 dependencies {
     implementation wpi.java.deps.wpilib()
     implementation wpi.java.vendor.java()
+    implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.0-alpha1'
+    implementation group: 'org.slf4j', name: 'slf4j-simple', version: '2.0.0-alpha1'
 
     roborioDebug wpi.java.deps.wpilibJniDebug(wpi.platforms.roborio)
     roborioDebug wpi.java.vendor.jniDebug(wpi.platforms.roborio)

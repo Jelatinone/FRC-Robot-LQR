@@ -36,7 +36,7 @@ public final class Robot extends LoggedRobot  {
     if (isReal()) {
       LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
       LOGGER.addDataReceiver(new NT4Publisher());
-      LoggedPowerDistribution.getInstance((0), ModuleType.kAutomatic);
+      LoggedPowerDistribution.getInstance((POWER_DISTRIBUTION_ID), ModuleType.kAutomatic);
     } else {
       if(Constants.AdvantageKit.REPLAY_FROM_LOG) {
         setUseTiming(TURBO_MODE);
@@ -44,7 +44,7 @@ public final class Robot extends LoggedRobot  {
         LOGGER.setReplaySource(new WPILOGReader(logPath));
         LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
       } else {
-        LOGGER.addDataReceiver(new WPILOGWriter("src\\main\\java\\frc\\deploy\\logs"));
+        LOGGER.addDataReceiver(new WPILOGWriter(LOGGING_FOLDER));
         LOGGER.addDataReceiver(new NT4Publisher());        
       }
     }
@@ -62,8 +62,9 @@ public final class Robot extends LoggedRobot  {
     Logger.getInstance().start();
     for (int ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
       PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
-    }    
+    }
     RobotContainer.getInstance();
+    NetworkTableInstance.getDefault().getEntry("Robot Active").setBoolean(true);
   }
 
   @Override
@@ -95,7 +96,7 @@ public final class Robot extends LoggedRobot  {
   // -------------------------------------------------------------[Disabled]----------------------------------------------------------------//
   @Override
   public void disabledInit() {
-
+    CommandScheduler.getInstance().cancelAll();
   }
 
   @Override
@@ -106,7 +107,6 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void disabledExit() {
-
   }
   // ------------------------------------------------------------[Autonomous]---------------------------------------------------------------//  
   @Override
@@ -141,7 +141,7 @@ public final class Robot extends LoggedRobot  {
     Shuffleboard.stopRecording();
   }     
 
-  // ---------------------------------------------------------------[Test]------------------------------------------------------------------//
+  // ----------------------------------------------------------------[Test]------------------------------------------------------------------//
   @Override
   public void testPeriodic() {
 

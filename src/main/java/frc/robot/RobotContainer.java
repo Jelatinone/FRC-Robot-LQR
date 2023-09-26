@@ -14,14 +14,12 @@ public final class RobotContainer {
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
     Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
-      new InstantCommand(() -> {
-      var Profile = Profiles.JOHN_DOE.PROFILE;
+      new InstantCommand(() -> 
       DrivebaseSubsystem.set(
-        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_HORIZONTAL_INPUT)),
-        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.TRANSLATION_VERTICAL_INPUT)),
-        Profile.getController().getRawAxis((Integer)Profile.getField(Profiles.FIELDS.ORIENTATION_INPUT)),
-        () -> false);
-      }));
+        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+        () -> true),DrivebaseSubsystem.getInstance()));
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 

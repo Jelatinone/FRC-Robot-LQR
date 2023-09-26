@@ -22,19 +22,27 @@ public final class Constants {
 
     public static final class Profiles { 
 
-        public static final class JOHN_DOE {
-            public static final Integer CONTROLLER_PORT = (0);
-            public static final PilotProfile PROFILE = new PilotProfile(new CommandXboxController(CONTROLLER_PORT));        
+        public static final class PreferenceNames {
+            public static final String TRANSLATIONAL_X_INPUT = ("TRANSLATION_X_INPUT");
+            public static final String TRANSLATIONAL_Y_INPUT = ("TRANSLATION_Y_INPUT");
+            public static final String ORIENTATION_INPUT = ("ORIENTATION_X_INPUT");
         }
 
-        public static final class FIELDS {
-            public static final String TRANSLATION_HORIZONTAL_INPUT = "TRANSLATION_HORIZONTAL_INPUT";
-            public static final String TRANSLATION_VERTICAL_INPUT = "TRANSLATION_VERTICAL_INPUT";
-            public static final String ORIENTATION_INPUT = "ORIENTATION_INPUT";
+        public static final class Test {
+            public static final Integer CONTROLLER_PORT = (0);
+            public static final CommandXboxController CONTROLLER = new CommandXboxController(CONTROLLER_PORT);
+            public static final PilotProfile PROFILE = new PilotProfile("JOHN-DOE")
+                .addPreference(PreferenceNames.TRANSLATIONAL_X_INPUT, () -> CONTROLLER.getLeftX())
+                .addPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT, () -> CONTROLLER.getLeftY())
+                .addPreference(PreferenceNames.ORIENTATION_INPUT, () -> CONTROLLER.getRightX());
         }
 
     }
 
+    public static final Integer POWER_DISTRIBUTION_ID = (0);
+
     public static final Logger LOGGER = Logger.getInstance();
+
+    public static final String LOGGING_FOLDER = ("src\\main\\java\\frc\\deploy\\logs");
     public static final Boolean TURBO_MODE = (false);
 }
