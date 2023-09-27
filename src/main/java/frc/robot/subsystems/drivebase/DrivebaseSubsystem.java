@@ -19,6 +19,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Consumer;
@@ -73,17 +75,33 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         getModulePositions(),
         new Pose2d());
 
+
     private static final Field2d FIELD = new Field2d();
+    private static final RepeatCommand LOGGING_COMMAND = new RepeatCommand(new InstantCommand(() -> {
+        var FieldPose = FIELD.getRobotPose();
+        SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
+        SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
+        LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);
+        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
+        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
+    }));
 
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
+
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
     /**
      * Constructor.
      */
     private DrivebaseSubsystem() {
         PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
+        addChild(("FL-Module[0]"),Hardware.Modules.FL_Module.Components.MODULE);
+        addChild(("FL-Module[1]"),Hardware.Modules.FR_Module.Components.MODULE);
+        addChild(("FL-Module[2]"),Hardware.Modules.RL_Module.Components.MODULE);
+        addChild(("FL-Module[3]"),Hardware.Modules.RR_Module.Components.MODULE);
+        LOGGING_COMMAND.schedule();
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
@@ -102,6 +120,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
+        LOGGING_COMMAND.schedule();
     }
 
     @Override
@@ -116,6 +135,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
+        LOGGING_COMMAND.schedule();
     }
 
     /**
@@ -148,7 +168,6 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * Closes all resources held within the subsystem, makes subsystem unusable
      */
     public void close() {
-        MODULES.clear();
         FIELD.close();
     }
     // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
@@ -165,9 +184,12 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         if(Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0))) {
             set();
         } else {
-            set((List.of(KINEMATICS.toSwerveModuleStates((FieldOriented)?
-                    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())) :
-                    (new ChassisSpeeds(Translation_X, Translation_Y, Orientation))))), ControlType);
+            set((List.of(KINEMATICS.toSwerveModuleStates(
+                (FieldOriented)?
+                    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())):
+                    (new ChassisSpeeds(Translation_X, Translation_Y, Orientation))))),
+                ControlType
+            );
         }
     }
 
@@ -183,19 +205,8 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
                 State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
         SwerveDriveKinematics.desaturateWheelSpeeds(Demand.toArray(SwerveModuleState[]::new), Values.Limit.ROBOT_MAXIMUM_VELOCITY);
         MODULES.forEach((Module) -> Module.set(DemandIterator.next(), ControlType));
-        LOGGER.recordOutput(("Drivebase/Demand"), Demand.toArray(SwerveModuleState[]::new));
-        MODULES.forEach(DrivebaseModule::post);
-        var FieldPose = FIELD.getRobotPose();
-        SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
-        SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());        
-        LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
-        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
-        LOGGER.recordOutput(("Drivebase/States"), getMeasuredModuleStates());
-        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
-        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
+        MODULES.forEach(DrivebaseModule::post);
     }
 
     /**

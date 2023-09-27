@@ -13,11 +13,10 @@ public final class RobotContainer {
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
-    configureKeybindings();
-    configureSubsystems();
+    Constants.Subsystems.DRIVEBASE_SUBSYSTEM.getInstance();
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
-  private void configureSubsystems() {
+  public void reconfigureSubsystems() {
     Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
             new InstantCommand(() ->
                     DrivebaseSubsystem.set(
@@ -28,7 +27,11 @@ public final class RobotContainer {
 
   }
 
-  private void configureKeybindings() {
+  public void deconfigureSubsystems() {
+    Constants.Subsystems.DRIVEBASE_SUBSYSTEM.removeDefaultCommand();
+  }
+
+  public void configureKeybindings() {
 
   }
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//

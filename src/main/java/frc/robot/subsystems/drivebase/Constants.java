@@ -98,7 +98,7 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -155,7 +155,7 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+              public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -212,7 +212,7 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+              public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 
@@ -269,7 +269,7 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
               (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
               new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
-            public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(AZIMUTH_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, () -> Values.MAXIMUM_LINEAR_VELOCITY, () -> Control.CONSTRAINTS, Control.CONTROL_LOOP);
+              public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
 

@@ -13,10 +13,10 @@ import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.io.Closeable;
+import java.util.Objects;
 import org.littletonrobotics.junction.Logger;
 
 // ------------------------------------------------------------[Drive Module Class]---------------------------------------------------------//
@@ -46,8 +47,8 @@ import org.littletonrobotics.junction.Logger;
  */
 public final class DrivebaseModule implements Closeable, Sendable, Consumer<SwerveModuleState>  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private final Supplier<TrapezoidProfile.Constraints> ROTATIONAL_MOTION_CONSTRAINTS;
-    private final Supplier<Double> MAXIMUM_TRANSLATIONAL_VELOCITY;
+    private final TrapezoidProfile.Constraints ROTATIONAL_MOTION_CONSTRAINTS;
+    private final Double MAXIMUM_TRANSLATIONAL_VELOCITY;
     private final LinearSystemLoop<N2, N1, N1> MOTION_CONTROL_LOOP;
     private final MotorControllerGroup TRANSLATION_CONTROLLER;
     private final MotorControllerGroup ROTATION_CONTROLLER;
@@ -57,32 +58,10 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     private static Integer INSTANCE_COUNT = 0;    
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
-    private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();
+    private RepeatCommand TargetStateCommand = new RepeatCommand(new InstantCommand());
     private SwerveModuleState DemandState = new SwerveModuleState();
     private Double TimeReference = (0.0);
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
-
-    /**
-     * Constructor.
-     *
-     * @param TranslationController      The motor controller(s) responsible for controlling linear translation (velocity); queried with {@link #setVelocity(Supplier, Supplier)}
-     * @param RotationController         The motor controller(s) responsible for controlling azimuth rotation (position); queried with {@link #setPosition(Supplier)}
-     * @param StateSensor                The sum all collected sensor(s) data into a single {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} supplier
-     * @param MaximumTranslationVelocity The constraints supplier placed on the Translation Controller which determine maximum velocity output
-     * @param RotationMotionConstraints  The constraint supplier placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
-     * @param MotionControlLoop          The control loop responsible for controller azimuth output
-     */
-    public DrivebaseModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor, final Supplier<Double> MaximumTranslationVelocity, final Supplier<TrapezoidProfile.Constraints> RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
-        MAXIMUM_TRANSLATIONAL_VELOCITY = MaximumTranslationVelocity;
-        ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
-        TRANSLATION_CONTROLLER = TranslationController;
-        ROTATION_CONTROLLER = RotationController;
-        MOTION_CONTROL_LOOP = MotionControlLoop;
-        STATE_SENSOR = StateSensor;
-        REFERENCE_NUMBER = INSTANCE_COUNT;
-        INSTANCE_COUNT++;
-        SendableRegistry.addLW(this, "DrivebaseModule", REFERENCE_NUMBER);
-    }
 
     /**
      * Constructor.
@@ -94,9 +73,16 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param RotationMotionConstraints  The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
      * @param MotionControlLoop          The control loop responsible for controller azimuth output
      */
-    @SuppressWarnings("unused")
     public DrivebaseModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor, final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
-        this(TranslationController, RotationController, StateSensor, () -> MaximumTranslationVelocity, () -> RotationMotionConstraints, MotionControlLoop);
+        MAXIMUM_TRANSLATIONAL_VELOCITY = MaximumTranslationVelocity;
+        ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
+        TRANSLATION_CONTROLLER = TranslationController;
+        ROTATION_CONTROLLER = RotationController;
+        MOTION_CONTROL_LOOP = MotionControlLoop;
+        STATE_SENSOR = StateSensor;
+        REFERENCE_NUMBER = INSTANCE_COUNT;
+        INSTANCE_COUNT++;
+        SendableRegistry.addLW(this, "DrivebaseModule", REFERENCE_NUMBER);
     }
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
@@ -109,11 +95,11 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     @SuppressWarnings("unused")
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
-        if (TranslationDemand != null & !Double.isNaN((TranslationDemand == null) ? (0.0) : (TranslationDemand))) {
+        if ((TranslationDemand != null) & (!Double.isNaN((Objects.isNull(TranslationDemand))? (0.0): (TranslationDemand)))) {
             if (ControlType.get()) {
-                TRANSLATION_CONTROLLER.set(TranslationDemand / MAXIMUM_TRANSLATIONAL_VELOCITY.get());
+                TRANSLATION_CONTROLLER.set(TranslationDemand / MAXIMUM_TRANSLATIONAL_VELOCITY);
             } else {
-                TRANSLATION_CONTROLLER.set(Demand.get());
+                TRANSLATION_CONTROLLER.set(TranslationDemand);
             }
         }
     }
@@ -123,7 +109,6 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @param Demand The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      */
-
     @SuppressWarnings("all")
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
         Rotation2d RotationDemand = Demand.get();
@@ -136,9 +121,8 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
             } else {
                 IntervalTime = (0.02);
             }
-            TrapezoidProfile.Constraints SystemConstraints = ROTATIONAL_MOTION_CONSTRAINTS.get();
             TrapezoidProfile.State targetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
-            TargetPositionStateReference = new TrapezoidProfile(SystemConstraints, targetPositionState, TargetPositionStateReference).calculate(IntervalTime);
+            TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, targetPositionState, TargetPositionStateReference).calculate(IntervalTime);
             MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position, TargetPositionStateReference.velocity);
             MOTION_CONTROL_LOOP.correct(VecBuilder.fill(STATE_SENSOR.get().angle.getRadians()));
             MOTION_CONTROL_LOOP.predict(IntervalTime);
@@ -154,12 +138,13 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      */
     @SuppressWarnings("unused, null")
     public synchronized void set(final Supplier<MotionState> Demand, final Supplier<Boolean> ControlType) {
-        var DemandState = Demand.get();
-        set(new SwerveModuleState(
-        new Translation2d(DemandState.TRANSLATION.getX(),
-          DemandState.TRANSLATION.getY()).getNorm(),
-        new Rotation2d(Demand.get().ROTATION.getX(),
-          Demand.get().ROTATION.getY())), ControlType);
+        var DemandMotion = Demand.get();
+        DemandState = new SwerveModuleState(
+            new Translation2d(DemandMotion.TRANSLATION.getX(),
+            DemandMotion.TRANSLATION.getY()).getNorm(),
+            new Rotation2d(Demand.get().ROTATION.getX(),
+              Demand.get().ROTATION.getY()));
+        set(DemandState, ControlType);              
     }
 
     /**
@@ -175,11 +160,10 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
         TargetStateCommand = new ParallelCommandGroup(
         new InstantCommand(() -> 
             setPosition(() -> new Rotation2d(OptimizedDemand.get().angle.getRadians()))),
-         new InstantCommand(() -> {
-            SwerveModuleState DemandState = OptimizedDemand.get();
-            setVelocity(() -> DemandState.speedMetersPerSecond, ControlType);
-        }));
-        TargetStateCommand.repeatedly().schedule();
+         new InstantCommand(() -> 
+            setVelocity(() -> OptimizedDemand.get().speedMetersPerSecond, ControlType))
+        ).repeatedly();
+        TargetStateCommand.schedule();
         DemandState = OptimizedDemand.get();
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
