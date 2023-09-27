@@ -76,8 +76,8 @@ public final class Constants {
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
-            public static final Double ACCELERATION_GAIN = (1.0); //TODO <---- Find Acceleration Gain (kA) of Linear Position System, Volts/(Units/Sec^2), DO NOT DEPLOY THIS UNTIL FOUND
-            public static final Double VELOCITY_GAIN = (1.0); //TODO <---- Find Velocity Gain (kV) of Linear Position System, Volts/(Units/Sec), DO NOT DEPLOY THIS UNTIL FOUND
+            public static final Double ACCELERATION_GAIN = (0.035); //TODO <---- Find Acceleration Gain (kA) of Linear Position System, Volts/(Units/Sec^2), DO NOT DEPLOY THIS UNTIL FOUND
+            public static final Double VELOCITY_GAIN = (0.035); //TODO <---- Find Velocity Gain (kV) of Linear Position System, Volts/(Units/Sec), DO NOT DEPLOY THIS UNTIL FOUND
 
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
@@ -133,8 +133,8 @@ public final class Constants {
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
-            public static final Double ACCELERATION_GAIN = (1.0);
-            public static final Double VELOCITY_GAIN = (1.0);
+            public static final Double ACCELERATION_GAIN = (0.035);
+            public static final Double VELOCITY_GAIN = (0.035);
 
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
@@ -190,8 +190,8 @@ public final class Constants {
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
-            public static final Double ACCELERATION_GAIN = (1.0);
-            public static final Double VELOCITY_GAIN = (1.0);
+            public static final Double ACCELERATION_GAIN = (0.035);
+            public static final Double VELOCITY_GAIN = (0.035);
 
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
@@ -247,8 +247,8 @@ public final class Constants {
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
-            public static final Double ACCELERATION_GAIN = (1.0);
-            public static final Double VELOCITY_GAIN = (1.0);
+            public static final Double ACCELERATION_GAIN = (0.035);
+            public static final Double VELOCITY_GAIN = (0.035);
 
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   

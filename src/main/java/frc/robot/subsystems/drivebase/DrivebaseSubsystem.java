@@ -21,21 +21,17 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
-
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.List;
-
 import frc.lib.DrivebaseModule;
-
-import static frc.robot.Constants.LOGGER;
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
+import static frc.robot.Constants.LOGGER;
 
 // -------------------------------------------------------[Drivebase Subsystem Class]-------------------------------------------------------//
 /**
@@ -55,11 +51,27 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
     private static DrivebaseSubsystem INSTANCE = (null);
 
-    private static final Stream<DrivebaseModule> MODULES = Stream.of(Hardware.Modules.FL_Module.Components.MODULE, Hardware.Modules.FR_Module.Components.MODULE, Hardware.Modules.RL_Module.Components.MODULE, Hardware.Modules.RR_Module.Components.MODULE).parallel();
+    private static final List<DrivebaseModule> MODULES = List.of(
+        Hardware.Modules.FL_Module.Components.MODULE,
+        Hardware.Modules.FR_Module.Components.MODULE,
+        Hardware.Modules.RL_Module.Components.MODULE,
+        Hardware.Modules.RR_Module.Components.MODULE);
 
-    private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(new Translation2d((Values.Chassis.ROBOT_WIDTH) / (2), (Values.Chassis.ROBOT_WIDTH) / (2)), new Translation2d((Values.Chassis.ROBOT_WIDTH) / (2), -(Values.Chassis.ROBOT_WIDTH) / (2)), new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2), (Values.Chassis.ROBOT_WIDTH) / (2)), new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2), -(Values.Chassis.ROBOT_WIDTH) / (2)));
+    private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
+        new Translation2d( (Values.Chassis.ROBOT_WIDTH) / (2),
+                           (Values.Chassis.ROBOT_WIDTH) / (2)),
+        new Translation2d( (Values.Chassis.ROBOT_WIDTH) / (2),
+                          -(Values.Chassis.ROBOT_WIDTH) / (2)),
+        new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2),
+                           (Values.Chassis.ROBOT_WIDTH) / (2)),
+        new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2),
+                          -(Values.Chassis.ROBOT_WIDTH) / (2)));
 
-    private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(KINEMATICS, Hardware.GYROSCOPE.getRotation2d(), getModulePositions(), new Pose2d());
+    private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(
+        KINEMATICS,
+        Hardware.GYROSCOPE.getRotation2d(),
+        getModulePositions(),
+        new Pose2d());
 
     private static final Field2d FIELD = new Field2d();
 
@@ -67,11 +79,10 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
-
     /**
      * Constructor.
      */
-    public DrivebaseSubsystem() {
+    private DrivebaseSubsystem() {
         PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
@@ -89,16 +100,22 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         } else {
             IntervalTime = (0.02);
         }
-        FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()));
-        MODULES.forEach(DrivebaseModule::post);
-        var FieldPose = FIELD.getRobotPose();
-        SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
-        SmartDashboard.putNumber(("Drivetrain/Translation"),FieldPose.getTranslation().getNorm());
-        SmartDashboard.putNumber(("Drivetrain/Rotation"),FieldPose.getRotation().getDegrees());
-        SmartDashboard.putNumber(("Drivetrain/Heading"),Hardware.GYROSCOPE.getYaw());
+        new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
-        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        double IntervalTime;
+        if (TimeInterval != (0)) {
+            var RealTime = Timer.getFPGATimestamp();
+            IntervalTime = RealTime - TimeInterval;
+            TimeInterval = RealTime;
+        } else {
+            IntervalTime = (0.02);
+        }
+        new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
+        LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
     }
 
     /**
@@ -131,7 +148,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * Closes all resources held within the subsystem, makes subsystem unusable
      */
     public void close() {
-        MODULES.close();
+        MODULES.clear();
         FIELD.close();
     }
     // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
@@ -167,6 +184,18 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         SwerveDriveKinematics.desaturateWheelSpeeds(Demand.toArray(SwerveModuleState[]::new), Values.Limit.ROBOT_MAXIMUM_VELOCITY);
         MODULES.forEach((Module) -> Module.set(DemandIterator.next(), ControlType));
         LOGGER.recordOutput(("Drivebase/Demand"), Demand.toArray(SwerveModuleState[]::new));
+        MODULES.forEach(DrivebaseModule::post);
+        var FieldPose = FIELD.getRobotPose();
+        SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
+        SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());        
+        LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
+        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
+        LOGGER.recordOutput(("Drivebase/States"), getMeasuredModuleStates());
+        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/Pose"), FIELD.getRobotPose());
+        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
     }
 
     /**
@@ -231,7 +260,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModulePosition SwerveModulePosition}
      */
     public static SwerveModulePosition[] getModulePositions() {
-        return MODULES.map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray(SwerveModulePosition[]::new);
+        return MODULES.stream().map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray(SwerveModulePosition[]::new);
     }
 
     /**
@@ -240,8 +269,17 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     @SuppressWarnings("unused")
-    public static SwerveModuleState[] getModuleStates() {
-        return MODULES.map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
+    public static SwerveModuleState[] getMeasuredModuleStates() {
+        return MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
+    }
+
+    /**
+     * Get an array representing the demand {@link edu.wpi.first.math.kinematics.SwerveModuleState state} of each module in order
+     *
+     * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
+     */
+    public static SwerveModuleState[] getDemandModuleStates() {
+        return MODULES.stream().map(DrivebaseModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**

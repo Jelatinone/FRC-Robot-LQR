@@ -11,8 +11,9 @@ import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -59,7 +60,6 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     private ParallelCommandGroup TargetStateCommand = new ParallelCommandGroup();
     private SwerveModuleState DemandState = new SwerveModuleState();
     private Double TimeReference = (0.0);
-
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
 
     /**
@@ -241,20 +241,20 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      */
     public void post() {
         var Prefix = ("Module [") + REFERENCE_NUMBER + ("]/");
-        SmartDashboard.putNumber(Prefix + "DEMAND ROTATION (Rad.)", DemandState.angle.getRadians());
-        SmartDashboard.putNumber(Prefix + "DEMAND VELOCITY (m/s)", DemandState.speedMetersPerSecond);
-        SmartDashboard.putNumber(Prefix + "DEMAND ROTATION PER SECOND (Rad./s",TargetPositionStateReference.velocity);
-        SmartDashboard.putNumber(Prefix + "MEASURED ROTATION (Rad.)", getMeasuredPosition().getRadians());
-        SmartDashboard.putNumber(Prefix + "MEASURED VELOCITY (m/s)", getMeasuredVelocity());
-        SmartDashboard.putNumber(Prefix + "OUTPUT ROTATION [-1,1]", ROTATION_CONTROLLER.get());
-        SmartDashboard.putNumber(Prefix + "OUTPUT VELOCITY [-1,1]", TRANSLATION_CONTROLLER.get());
-        LOGGER.recordOutput(Prefix + "DemandAzimuthPosition", DemandState.angle.getDegrees());
-        LOGGER.recordOutput(Prefix + "DemandAzimuthPositionVelocity", TargetPositionStateReference.velocity);
-        LOGGER.recordOutput(Prefix + "DemandTranslationVelocity", DemandState.speedMetersPerSecond);
-        LOGGER.recordOutput(Prefix + "MeasuredAzimuthRotation", getMeasuredPosition().getDegrees());
-        LOGGER.recordOutput(Prefix + "MeasuredTranslationVelocity", getMeasuredVelocity());
-        LOGGER.recordOutput(Prefix + "OutputAzimuthPercent", ROTATION_CONTROLLER.get());
-        LOGGER.recordOutput(Prefix + "OutputTranslationPercent", TRANSLATION_CONTROLLER.get());
+        SmartDashboard.putNumber(Prefix + "Demand Rotation", DemandState.angle.getRadians());
+        SmartDashboard.putNumber(Prefix + "Demand Rotation Velocity",TargetPositionStateReference.velocity);        
+        SmartDashboard.putNumber(Prefix + "Demand Velocity", DemandState.speedMetersPerSecond);
+        SmartDashboard.putNumber(Prefix + "Measured Rotation", getMeasuredPosition().getRadians());
+        SmartDashboard.putNumber(Prefix + "Measured Velocity", getMeasuredVelocity());
+        SmartDashboard.putNumber(Prefix + "Output Rotation", ROTATION_CONTROLLER.get());
+        SmartDashboard.putNumber(Prefix + "Output Velocity", TRANSLATION_CONTROLLER.get());
+        LOGGER.recordOutput((Prefix + "DemandAzimuthPosition"), DemandState.angle.getDegrees());
+        LOGGER.recordOutput((Prefix + "DemandAzimuthPositionVelocity"), TargetPositionStateReference.velocity);
+        LOGGER.recordOutput((Prefix + "DemandTranslationVelocity"), DemandState.speedMetersPerSecond);
+        LOGGER.recordOutput((Prefix + "MeasuredAzimuthRotation"), getMeasuredPosition().getDegrees());
+        LOGGER.recordOutput((Prefix + "MeasuredTranslationVelocity"), getMeasuredVelocity());
+        LOGGER.recordOutput((Prefix + "OutputAzimuthPercent"), ROTATION_CONTROLLER.get());
+        LOGGER.recordOutput((Prefix + "OutputTranslationPercent"), TRANSLATION_CONTROLLER.get());
     }
 
     /**

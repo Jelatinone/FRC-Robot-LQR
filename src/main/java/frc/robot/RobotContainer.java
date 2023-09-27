@@ -13,16 +13,24 @@ public final class RobotContainer {
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
-    Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
-      new InstantCommand(() -> 
-      DrivebaseSubsystem.set(
-        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
-        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
-        (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
-        () -> true),DrivebaseSubsystem.getInstance()));
+    configureKeybindings();
+    configureSubsystems();
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
+  private void configureSubsystems() {
+    Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
+            new InstantCommand(() ->
+                    DrivebaseSubsystem.set(
+                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+                            () -> true),DrivebaseSubsystem.getInstance()));
 
+  }
+
+  private void configureKeybindings() {
+
+  }
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
