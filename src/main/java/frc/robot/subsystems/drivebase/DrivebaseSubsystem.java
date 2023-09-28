@@ -84,13 +84,10 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
-        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
     }));
-
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
-
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
     /**
      * Constructor.
@@ -98,9 +95,9 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     private DrivebaseSubsystem() {
         PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
         addChild(("FL-Module[0]"),Hardware.Modules.FL_Module.Components.MODULE);
-        addChild(("FL-Module[1]"),Hardware.Modules.FR_Module.Components.MODULE);
-        addChild(("FL-Module[2]"),Hardware.Modules.RL_Module.Components.MODULE);
-        addChild(("FL-Module[3]"),Hardware.Modules.RR_Module.Components.MODULE);
+        addChild(("FR-Module[1]"),Hardware.Modules.FR_Module.Components.MODULE);
+        addChild(("RL-Module[2]"),Hardware.Modules.RL_Module.Components.MODULE);
+        addChild(("RR-Module[3]"),Hardware.Modules.RR_Module.Components.MODULE);
         LOGGING_COMMAND.schedule();
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
@@ -168,6 +165,8 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * Closes all resources held within the subsystem, makes subsystem unusable
      */
     public void close() {
+        MODULES.forEach(DrivebaseModule::close);
+        LOGGING_COMMAND.cancel();
         FIELD.close();
     }
     // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
@@ -206,6 +205,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         SwerveDriveKinematics.desaturateWheelSpeeds(Demand.toArray(SwerveModuleState[]::new), Values.Limit.ROBOT_MAXIMUM_VELOCITY);
         MODULES.forEach((Module) -> Module.set(DemandIterator.next(), ControlType));
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
         MODULES.forEach(DrivebaseModule::post);
     }
 

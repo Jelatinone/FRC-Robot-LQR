@@ -6,6 +6,8 @@ import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
+import com.revrobotics.CANSparkMax;
+import com.revrobotics.CANSparkMaxLowLevel;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
@@ -19,6 +21,7 @@ import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import frc.lib.DrivebaseModule;
 
@@ -50,7 +53,9 @@ public final class Constants {
       public static final Double WHEEL_DIAMETER = (0.1016);          
       public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;      
       public static final Double DRIVETRAIN_GEAR_RATIO = (6.75);    
-      public static final Double ROBOT_WIDTH = (0.6858);         
+      public static final Double ROBOT_WIDTH = (0.6858);
+
+      public static final Boolean IS_NEO_SWERVE = (false);
     }
 
     public static final class Limit {   
@@ -85,19 +90,55 @@ public final class Constants {
             public static final Double MODEL_VELOCITY_ACCURACY_DEGREES = (7e-5);
             public static final Double MODEL_POSITION_ACCURACY_RPM = (2.5e-4);
             public static final Double DISCRETIZATION_TIMESTEP = (1/50.0);
-
+            public static final CANSparkMaxLowLevel.MotorType AZIMUTH_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final CANSparkMaxLowLevel.MotorType LINEAR_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final Double AZIMUTH_NOMINAL_VOLTAGE = (0.0);
+            public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
+            public static final Integer AZIMUTH_AMP_LIMIT = (0);
+            public static final Integer LINEAR_AMP_LIMIT = (0);
             public static final Integer AZIMUTH_ID = (21);                       
             public static final Integer LINEAR_ID = (11);    
             public static final Integer SENSOR_ID = (4);
+
+
           }
 
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                                 
-            public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
-              (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-              new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
+            public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureTranslationController(new CANSparkMax(
+                      Values.LINEAR_ID,
+                      Values.LINEAR_MOTOR_TYPE),
+                      Values.LINEAR_AMP_LIMIT,
+                      Values.LINEAR_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureTranslationController(new WPI_TalonFX(
+                      Values.LINEAR_ID),
+                      Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureRotationController(new CANSparkMax(
+                      Values.AZIMUTH_ID,
+                      Values.AZIMUTH_MOTOR_TYPE),
+                      Values.AZIMUTH_AMP_LIMIT,
+                      Values.AZIMUTH_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureRotationController(new WPI_TalonFX(
+                      Values.AZIMUTH_ID),
+                      AZIMUTH_SENSOR,
+                      Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
+                      Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (() -> {
+                assert LINEAR_CONTROLLER instanceof CANSparkMax;
+                return new SwerveModuleState(
+                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
+                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+                );
+              }):
+              (() -> {
+                  assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
+                  return new SwerveModuleState(
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
+              });
             public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
@@ -135,14 +176,17 @@ public final class Constants {
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (0.035);
             public static final Double VELOCITY_GAIN = (0.035);
-
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
-
             public static final Double MODEL_VELOCITY_ACCURACY_DEGREES = (7e-5);
             public static final Double MODEL_POSITION_ACCURACY_RPM = (2.5e-4);
             public static final Double DISCRETIZATION_TIMESTEP = (1/50.0);
-
+            public static final CANSparkMaxLowLevel.MotorType AZIMUTH_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final CANSparkMaxLowLevel.MotorType LINEAR_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final Double AZIMUTH_NOMINAL_VOLTAGE = (0.0);
+            public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
+            public static final Integer AZIMUTH_AMP_LIMIT = (0);
+            public static final Integer LINEAR_AMP_LIMIT = (0);
             public static final Integer AZIMUTH_ID = (22);                       
             public static final Integer LINEAR_ID = (12);    
             public static final Integer SENSOR_ID = (5);
@@ -150,11 +194,40 @@ public final class Constants {
 
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                              
-            public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
-              (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-              new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
+            public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureTranslationController(new CANSparkMax(
+                      Values.LINEAR_ID,
+                      Values.LINEAR_MOTOR_TYPE),
+                      Values.LINEAR_AMP_LIMIT,
+                      Values.LINEAR_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureTranslationController(new WPI_TalonFX(
+                      Values.LINEAR_ID),
+                      Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureRotationController(new CANSparkMax(
+                      Values.AZIMUTH_ID,
+                      Values.AZIMUTH_MOTOR_TYPE),
+                      Values.AZIMUTH_AMP_LIMIT,
+                      Values.AZIMUTH_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureRotationController(new WPI_TalonFX(
+                      Values.AZIMUTH_ID),
+                      AZIMUTH_SENSOR,
+                      Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
+                      Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (() -> {
+                assert LINEAR_CONTROLLER instanceof CANSparkMax;
+                return new SwerveModuleState(
+                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
+                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+                );
+              }):
+              (() -> {
+                  assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
+                  return new SwerveModuleState(
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
+              });          
               public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
@@ -192,14 +265,17 @@ public final class Constants {
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (0.035);
             public static final Double VELOCITY_GAIN = (0.035);
-
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
-
             public static final Double MODEL_VELOCITY_ACCURACY_DEGREES = (7e-5);
             public static final Double MODEL_POSITION_ACCURACY_RPM = (2.5e-4);
             public static final Double DISCRETIZATION_TIMESTEP = (1/50.0);
-
+            public static final CANSparkMaxLowLevel.MotorType AZIMUTH_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final CANSparkMaxLowLevel.MotorType LINEAR_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final Double AZIMUTH_NOMINAL_VOLTAGE = (0.0);
+            public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
+            public static final Integer AZIMUTH_AMP_LIMIT = (0);
+            public static final Integer LINEAR_AMP_LIMIT = (0);
             public static final Integer AZIMUTH_ID = (23);                       
             public static final Integer LINEAR_ID = (13);    
             public static final Integer SENSOR_ID = (6);
@@ -207,11 +283,40 @@ public final class Constants {
 
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                             
-            public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
-              (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-              new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
+            public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureTranslationController(new CANSparkMax(
+                      Values.LINEAR_ID,
+                      Values.LINEAR_MOTOR_TYPE),
+                      Values.LINEAR_AMP_LIMIT,
+                      Values.LINEAR_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureTranslationController(new WPI_TalonFX(
+                      Values.LINEAR_ID),
+                      Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureRotationController(new CANSparkMax(
+                      Values.AZIMUTH_ID,
+                      Values.AZIMUTH_MOTOR_TYPE),
+                      Values.AZIMUTH_AMP_LIMIT,
+                      Values.AZIMUTH_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureRotationController(new WPI_TalonFX(
+                      Values.AZIMUTH_ID),
+                      AZIMUTH_SENSOR,
+                      Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
+                      Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (() -> {
+                assert LINEAR_CONTROLLER instanceof CANSparkMax;
+                return new SwerveModuleState(
+                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
+                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+                );
+              }):
+              (() -> {
+                  assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
+                  return new SwerveModuleState(
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
+              });            
               public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
@@ -249,14 +354,17 @@ public final class Constants {
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
             public static final Double ACCELERATION_GAIN = (0.035);
             public static final Double VELOCITY_GAIN = (0.035);
-
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
-
             public static final Double MODEL_VELOCITY_ACCURACY_DEGREES = (7e-5);
             public static final Double MODEL_POSITION_ACCURACY_RPM = (2.5e-4);
             public static final Double DISCRETIZATION_TIMESTEP = (1/50.0);
-
+            public static final CANSparkMaxLowLevel.MotorType AZIMUTH_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final CANSparkMaxLowLevel.MotorType LINEAR_MOTOR_TYPE = CANSparkMaxLowLevel.MotorType.kBrushless;
+            public static final Double AZIMUTH_NOMINAL_VOLTAGE = (0.0);
+            public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
+            public static final Integer AZIMUTH_AMP_LIMIT = (0);
+            public static final Integer LINEAR_AMP_LIMIT = (0);
             public static final Integer AZIMUTH_ID = (24);                       
             public static final Integer LINEAR_ID = (14);    
             public static final Integer SENSOR_ID = (7);
@@ -264,11 +372,40 @@ public final class Constants {
 
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = DrivebaseModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
-            public static final WPI_TalonFX LINEAR_CONTROLLER = DrivebaseModule.configureTranslationController(new WPI_TalonFX(Values.LINEAR_ID), Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT);            
-            public static final WPI_TalonFX AZIMUTH_CONTROLLER = DrivebaseModule.configureRotationController(new WPI_TalonFX(Values.AZIMUTH_ID), AZIMUTH_SENSOR, Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT, Constants.Values.ComponentData.AZIMUTH_DEADBAND);                         
-            public static final Supplier<SwerveModuleState> STATE_SENSOR = () -> new SwerveModuleState(
-              (2.0)*(((LINEAR_CONTROLLER.getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-              new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));            
+            public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureTranslationController(new CANSparkMax(
+                      Values.LINEAR_ID,
+                      Values.LINEAR_MOTOR_TYPE),
+                      Values.LINEAR_AMP_LIMIT,
+                      Values.LINEAR_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureTranslationController(new WPI_TalonFX(
+                      Values.LINEAR_ID),
+                      Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (DrivebaseModule.configureRotationController(new CANSparkMax(
+                      Values.AZIMUTH_ID,
+                      Values.AZIMUTH_MOTOR_TYPE),
+                      Values.AZIMUTH_AMP_LIMIT,
+                      Values.AZIMUTH_NOMINAL_VOLTAGE)):
+              (DrivebaseModule.configureRotationController(new WPI_TalonFX(
+                      Values.AZIMUTH_ID),
+                      AZIMUTH_SENSOR,
+                      Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
+                      Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
+              (() -> {
+                assert LINEAR_CONTROLLER instanceof CANSparkMax;
+                return new SwerveModuleState(
+                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
+                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+                );
+              }):
+              (() -> {
+                  assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
+                  return new SwerveModuleState(
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
+              });             
               public static final DrivebaseModule MODULE = new DrivebaseModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       

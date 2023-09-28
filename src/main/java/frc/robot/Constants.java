@@ -17,6 +17,8 @@ public final class Constants {
     
     public static final class AdvantageKit {
         public static final Boolean REPLAY_FROM_LOG = (false);
+
+        public static final Boolean LOGGING_ENABLED = (false);
     }
 
 

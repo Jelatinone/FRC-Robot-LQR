@@ -13,21 +13,21 @@ public final class RobotContainer {
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
-    Constants.Subsystems.DRIVEBASE_SUBSYSTEM.getInstance();
+
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
-  public void reconfigureSubsystems() {
+  public void activateSubsystemDefaults() {
     Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
             new InstantCommand(() ->
                     DrivebaseSubsystem.set(
                             (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
-                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
-                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_X_INPUT),
+                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.TRANSLATIONAL_Y_INPUT),
+                            (Double)Profiles.Test.PROFILE.getPreference(Profiles.PreferenceNames.ORIENTATION_INPUT),
                             () -> true),DrivebaseSubsystem.getInstance()));
 
   }
 
-  public void deconfigureSubsystems() {
+  public void deactivateSubsystemDefaults() {
     Constants.Subsystems.DRIVEBASE_SUBSYSTEM.removeDefaultCommand();
   }
 

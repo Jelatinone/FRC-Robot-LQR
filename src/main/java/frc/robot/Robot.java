@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import static frc.robot.Constants.*;
+import static frc.robot.Constants.AdvantageKit.*;
 // ---------------------------------------------------------------[Robot Class]-------------------------------------------------------------//
 public final class Robot extends LoggedRobot  {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
@@ -39,34 +40,39 @@ public final class Robot extends LoggedRobot  {
     Threads.setCurrentThreadPriority((true), (20));
   }));
   // ---------------------------------------------------------------[Robot]-----------------------------------------------------------------//
+  @SuppressWarnings("ExtractMethodRecommender")
   @Override
   public void robotInit() {
     LOGGER.recordMetadata(("ProjectName"), ("PROJECT-LIQUORICE"));
     if (isReal()) {
-      LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
+      if(LOGGING_ENABLED) {
+        LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
+      }
       LOGGER.addDataReceiver(new NT4Publisher());
       LoggedPowerDistribution.getInstance((POWER_DISTRIBUTION_ID), ModuleType.kAutomatic);
     } else {
-      if(Constants.AdvantageKit.REPLAY_FROM_LOG) {
+      if(REPLAY_FROM_LOG) {
         setUseTiming(TURBO_MODE);
         String logPath = LogFileUtil.findReplayLog();
         LOGGER.setReplaySource(new WPILOGReader(logPath));
-        LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        if(LOGGING_ENABLED) {
+          LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+        }
       } else {
-        LOGGER.addDataReceiver(new WPILOGWriter(LOGGING_FOLDER));
+        if(LOGGING_ENABLED) {
+          LOGGER.addDataReceiver(new WPILOGWriter(LOGGING_FOLDER));
+        }
         LOGGER.addDataReceiver(new NT4Publisher());        
       }
     }
     HashMap<String,Integer> CommandInstanceCount = new HashMap<>();
-    BiConsumer<Command, Boolean> CommandFunctionLogger = (Command Operation, Boolean Active) -> {
-      new Thread(() -> {
-      String OperationName = Operation.getName();
-      int Count = CommandInstanceCount.getOrDefault(OperationName, (0)) + ((Active)? (1): (-1));
-      CommandInstanceCount.put(OperationName,Count);
-      LOGGER.recordOutput("UniqueOperations/" + OperationName + "_" + Integer.toHexString(Operation.hashCode()), Active);
-      LOGGER.recordOutput("Operations/" + OperationName, Count > 0); 
-      });
-    };
+    BiConsumer<Command, Boolean> CommandFunctionLogger = (Command Operation, Boolean Active) -> new Thread(() -> {
+    String OperationName = Operation.getName();
+    int Count = CommandInstanceCount.getOrDefault(OperationName, (0)) + ((Active)? (1): (-1));
+    CommandInstanceCount.put(OperationName,Count);
+    LOGGER.recordOutput("UniqueOperations/" + OperationName + "_" + Integer.toHexString(Operation.hashCode()), Active);
+    LOGGER.recordOutput("Operations/" + OperationName, Count > 0);
+    });
     CommandScheduler.getInstance().onCommandInitialize((Command Command) -> CommandFunctionLogger.accept(Command, (true)));
     CommandScheduler.getInstance().onCommandInterrupt((Command Command) -> CommandFunctionLogger.accept(Command, (false)));
     CommandScheduler.getInstance().onCommandFinish((Command Command) -> CommandFunctionLogger.accept(Command, (false)));    
@@ -74,7 +80,6 @@ public final class Robot extends LoggedRobot  {
     for (int ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
       PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
     }
-    RobotContainer.getInstance().reconfigureSubsystems();
     COMMAND_LOGGER.schedule();    
   }
 
@@ -82,7 +87,6 @@ public final class Robot extends LoggedRobot  {
   public void robotPeriodic() {
     CommandScheduler.getInstance().run();    
     SmartDashboard.updateValues();    
-
   }
 
   // ------------------------------------------------------------[Simulation]---------------------------------------------------------------//
@@ -110,6 +114,7 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void disabledExit() {
+    super.disabledExit();
   }
   // ------------------------------------------------------------[Autonomous]---------------------------------------------------------------//  
   @Override
@@ -132,7 +137,7 @@ public final class Robot extends LoggedRobot  {
   @Override
   public void teleopInit() {
     Shuffleboard.startRecording();    
-    RobotContainer.getInstance().reconfigureSubsystems();
+    RobotContainer.getInstance().activateSubsystemDefaults();
 
   }
 
@@ -143,7 +148,7 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void teleopExit() {
-    RobotContainer.getInstance().deconfigureSubsystems();
+    RobotContainer.getInstance().deactivateSubsystemDefaults();
     Shuffleboard.stopRecording();
   }     
 
@@ -155,11 +160,11 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void testInit() {
-
+    super.testInit();
   }
 
   @Override
   public void testExit() {
-
+    super.testExit();
   }
 }

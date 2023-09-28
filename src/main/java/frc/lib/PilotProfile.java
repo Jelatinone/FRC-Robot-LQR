@@ -12,7 +12,7 @@ import java.util.Map;
  * 
  * <h1> PilotProfile </h1>
  * 
- * <p> Represents a robot driver's personalized preferences and keybinds that can be used to control the robot to their desires. </p>
+ * <p> Represents a robot driver's personalized preferences and keybindings that can be used to control the robot to their desires. </p>
  * 
  * @author Cody Washington (@Jelatinone) 
  */
@@ -31,12 +31,12 @@ public final class PilotProfile {
   }  
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
   /**
-   * Adds a new keybind to the pilot's keybind mapping
-   * @param KeybindName      Name of keybind
-   * @param KeybindRetriever Keybind Trigger
+   * Adds a new keybinding to the pilot's keybinding mapping
+   * @param KeybindingName      Name of keybinding
+   * @param KeybindingRetriever Keybinding Trigger
    */
-  public PilotProfile addKeybind(final String KeybindName, final Trigger KeybindRetriever) {
-    KEYBINDINGS.put(KeybindName, KeybindRetriever);
+  public PilotProfile addKeybinding(final String KeybindingName, final Trigger KeybindingRetriever) {
+    KEYBINDINGS.put(KeybindingName, KeybindingRetriever);
     return this;
   }
   /**
@@ -50,17 +50,17 @@ public final class PilotProfile {
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
   /**
-   * Retrieves a keybind from the pilot's keybind mapping
-   * @param KeybindName Name of keybind
-   * @return A trigger from the pilot's keybind map
+   * Retrieves a keybinding from the pilot's keybinding mapping
+   * @param KeybindingName Name of keybinding
+   * @return A trigger from the pilot's keybinding map
    */
-  public Trigger getKeybind(final String KeybindName) {
-    return KEYBINDINGS.get(KeybindName);
+  public Trigger getKeybinding(final String KeybindingName) {
+    return KEYBINDINGS.get(KeybindingName);
   }
   /**
-   * Retreives a preference from the pilot's preference mapping
+   * Retrieves a preference from the pilot's preference mapping
    * @param ValueName Name of preference
-   * @return An object from the pilot's keybind map
+   * @return An object from the pilot's keybinding map
    */
   public Object getPreference(final String ValueName) {
     return PREFERENCES.get(ValueName).get();
