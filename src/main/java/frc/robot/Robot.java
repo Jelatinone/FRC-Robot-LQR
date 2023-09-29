@@ -137,7 +137,7 @@ public final class Robot extends LoggedRobot  {
   @Override
   public void teleopInit() {
     Shuffleboard.startRecording();    
-    RobotContainer.getInstance().activateSubsystemDefaults();
+    RobotContainer.applySubsystemDefaults();
 
   }
 
@@ -148,7 +148,7 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void teleopExit() {
-    RobotContainer.getInstance().deactivateSubsystemDefaults();
+    RobotContainer.removeSubsystemDefaults();
     Shuffleboard.stopRecording();
   }     
 

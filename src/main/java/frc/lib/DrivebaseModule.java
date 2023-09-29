@@ -95,9 +95,10 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     @SuppressWarnings("unused")
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
-        if ((TranslationDemand != null) & (!Double.isNaN((Objects.isNull(TranslationDemand))? (0.0): (TranslationDemand)))) {
+        TranslationDemand = Objects.isNull(TranslationDemand)? (0.0): (TranslationDemand);
+        if (!Double.isNaN(TranslationDemand) && Math.abs(TranslationDemand - getTranslationalOutput()) > (2e-2)) {
             if (ControlType.get()) {
-                TRANSLATION_CONTROLLER.set(TranslationDemand / MAXIMUM_TRANSLATIONAL_VELOCITY);
+                TRANSLATION_CONTROLLER.set(TranslationDemand * (MAXIMUM_TRANSLATIONAL_VELOCITY));
             } else {
                 TRANSLATION_CONTROLLER.set(TranslationDemand);
             }
@@ -225,10 +226,10 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      */
     public void post() {
         var Prefix = ("Module [") + REFERENCE_NUMBER + ("]/");
-        SmartDashboard.putNumber(Prefix + "Demand Rotation", DemandState.angle.getRadians());
+        SmartDashboard.putNumber(Prefix + "Demand Rotation", DemandState.angle.getDegrees());
         SmartDashboard.putNumber(Prefix + "Demand Rotation Velocity",TargetPositionStateReference.velocity);        
         SmartDashboard.putNumber(Prefix + "Demand Velocity", DemandState.speedMetersPerSecond);
-        SmartDashboard.putNumber(Prefix + "Measured Rotation", getMeasuredPosition().getRadians());
+        SmartDashboard.putNumber(Prefix + "Measured Rotation", getMeasuredPosition().getDegrees());
         SmartDashboard.putNumber(Prefix + "Measured Velocity", getMeasuredVelocity());
         SmartDashboard.putNumber(Prefix + "Output Rotation", ROTATION_CONTROLLER.get());
         SmartDashboard.putNumber(Prefix + "Output Velocity", TRANSLATION_CONTROLLER.get());

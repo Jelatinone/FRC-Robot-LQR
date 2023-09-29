@@ -28,9 +28,10 @@ import java.util.function.Supplier;
 import java.io.Closeable;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.List;
 import frc.lib.DrivebaseModule;
+import frc.robot.subsystems.drivebase.Constants.Values.Limit;
+
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
 import static frc.robot.Constants.LOGGER;
@@ -86,6 +87,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
     }));
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
+    private static Boolean LockingEnabled = (false);    
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
@@ -116,6 +118,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
+        SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
         LOGGING_COMMAND.schedule();
     }
@@ -131,6 +134,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
+        SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
         LOGGING_COMMAND.schedule();
     }
@@ -170,9 +174,8 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         FIELD.close();
     }
     // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
-
     /**
-     * Set and  demand states based on translation and orientation inputs to generate module states
+     * Set and  demand states based on translation and orientation joystick inputs to generate module states
      *
      * @param Translation_X Demand on the X-axis
      * @param Translation_Y Demand on the Y-axis
@@ -180,13 +183,16 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @param ControlType   Whether to use OpenLoop control
      */
     public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, Supplier<Boolean> ControlType) {
-        if(Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0)) && Objects.equals(Orientation, (0.0))) {
+        SmartDashboard.putNumber(("Drivebase/Translation (leftX) Input"), Translation_X);
+        SmartDashboard.putNumber(("Drivebase/Translation (leftY) Input"), Translation_Y);
+        SmartDashboard.putNumber(("Drivebase/Orientation (rightX) Input"), Orientation);
+        if((Math.abs(Translation_X) <= (2e-2)) && (Math.abs(Translation_Y) <= (2e-2)) && (Math.abs(Orientation) <= (2e-2))) {
             set();
         } else {
             set((List.of(KINEMATICS.toSwerveModuleStates(
-                (FieldOriented)?
-                    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_X, Translation_Y, Orientation, Hardware.GYROSCOPE.getRotation2d())):
-                    (new ChassisSpeeds(Translation_X, Translation_Y, Orientation))))),
+                (FieldOriented)? //TODO Field Oriented Drive
+                    (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_Y, Translation_X, Orientation, Hardware.GYROSCOPE.getRotation2d())):
+                    (new ChassisSpeeds(Translation_Y, Translation_X, Orientation))))), 
                 ControlType
             );
         }
@@ -198,15 +204,20 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @param Demand      Module state demands
      * @param ControlType Whether to use OpenLoop control
      */
-    public static synchronized void set(final List<SwerveModuleState> Demand, Supplier<Boolean> ControlType) {
+    public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
         var DemandIterator = Demand.iterator();
-        Demand.forEach((State) ->
-                State.speedMetersPerSecond = (((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)));
-        SwerveDriveKinematics.desaturateWheelSpeeds(Demand.toArray(SwerveModuleState[]::new), Values.Limit.ROBOT_MAXIMUM_VELOCITY);
-        MODULES.forEach((Module) -> Module.set(DemandIterator.next(), ControlType));
+        var DemandArray = Demand.toArray(SwerveModuleState[]::new);
+        SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray,Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
+        Demand = List.of(DemandArray);  
+        Demand.forEach((State) -> 
+            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)) * 1e-4) * 2);
+        MODULES.forEach((Module) ->  {
+            Module.set(DemandIterator.next(), ControlType);
+            Module.post();
+        });              
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
         LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
-        MODULES.forEach(DrivebaseModule::post);
+
     }
 
     /**
@@ -248,6 +259,23 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     @SuppressWarnings("unused")
     public static void toggleFieldOriented() {
         FieldOriented = !FieldOriented;
+    }
+
+    /**
+     * Set whether the robot will x-lock when inputs are idle
+     * 
+     * @param isLockingEnabled Whether Locking is enabled
+     */
+    @SuppressWarnings("unused")
+    public static void setLockingEnabled(final Boolean isLockingEnabled) {
+        LockingEnabled = isLockingEnabled;
+    }
+
+    /**
+     * Toggles (switches) the current state of Lock Enabled
+     */
+    public static void toggleLockingEnabled() {
+        LockingEnabled = !LockingEnabled;
     }
     // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
 

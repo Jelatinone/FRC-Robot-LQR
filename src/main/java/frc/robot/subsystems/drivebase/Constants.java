@@ -59,7 +59,7 @@ public final class Constants {
     }
 
     public static final class Limit {   
-      public static final Double ROBOT_MAXIMUM_VELOCITY = (5.4);    
+      public static final Double ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT = (1.0);   
     }
 
     public static final class Port {
