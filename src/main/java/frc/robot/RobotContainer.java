@@ -18,7 +18,10 @@ public final class RobotContainer {
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
-
+    Constants.Profiles.PILOT_PROFILES.forEach((Profile) -> {
+      Profile.getKeybinding(KeybindingNames.FIELD_ORIENTED_TOGGLE).onTrue(new InstantCommand(DrivebaseSubsystem::toggleFieldOriented, DrivebaseSubsystem.getInstance()));
+      Profile.getKeybinding(KeybindingNames.LOCKING_TOGGLE_TRIGGER).onTrue(new InstantCommand(DrivebaseSubsystem::toggleLockingEnabled, DrivebaseSubsystem.getInstance()));
+    });
   }
   // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
   /**
@@ -30,7 +33,7 @@ public final class RobotContainer {
         DrivebaseSubsystem.set(
           applyInputSquare(applyInputDeadzone(-(Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_INPUT),
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_DEADZONE))),
-          applyInputSquare(applyInputDeadzone((Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT),
+          applyInputSquare(applyInputDeadzone(-(Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT),
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_DEADZONE))),
           applyInputSquare(applyInputDeadzone((Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_INPUT),
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_DEADZONE))),
@@ -45,16 +48,6 @@ public final class RobotContainer {
    */
   public static void removeSubsystemDefaults() {
     Constants.Subsystems.SUBSYSTEMS.forEach(SubsystemBase::removeDefaultCommand);
-  }
-
-  /**
-   * Configure all pilot keybindings to proper event triggers
-   */
-  public static void configureKeybindings() {
-    Constants.Profiles.PILOT_PROFILES.forEach((Profile) -> {
-      Profile.getKeybinding(KeybindingNames.FIELD_ORIENTED_TOGGLE).onTrue(new InstantCommand(DrivebaseSubsystem::toggleFieldOriented, DrivebaseSubsystem.getInstance()));
-      Profile.getKeybinding(KeybindingNames.LOCKING_TOGGLE_TRIGGER).onTrue(new InstantCommand(DrivebaseSubsystem::toggleLockingEnabled, DrivebaseSubsystem.getInstance()));
-    });
   }
   // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
   public static Double applyInputDeadzone(final Double Input, final Double Deadzone) {

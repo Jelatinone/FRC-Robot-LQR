@@ -197,6 +197,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveModuleState, Supplier)} to call again.
      */
     public void stop() {
+        DemandState = new SwerveModuleState((0.0),getDemandPosition());
         TargetStateCommand.cancel();
         TRANSLATION_CONTROLLER.stopMotor();
         ROTATION_CONTROLLER.stopMotor();

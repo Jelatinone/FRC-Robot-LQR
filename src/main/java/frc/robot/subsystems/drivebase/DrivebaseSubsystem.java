@@ -163,6 +163,8 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
     @SuppressWarnings("unused")
     public static synchronized void stop() {
         MODULES.forEach(DrivebaseModule::stop);
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
     }
 
     /**
@@ -187,7 +189,11 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         SmartDashboard.putNumber(("Drivebase/Translation (leftY) Input"), Translation_Y);
         SmartDashboard.putNumber(("Drivebase/Orientation (rightX) Input"), Orientation);
         if((Math.abs(Translation_X) <= (2e-2)) && (Math.abs(Translation_Y) <= (2e-2)) && (Math.abs(Orientation) <= (2e-2))) {
-            set();
+            if (LockingEnabled) {
+                set();
+            } else {
+                stop();
+            }
         } else {
             set((List.of(KINEMATICS.toSwerveModuleStates(
                 (FieldOriented)? //TODO Field Oriented Drive
@@ -214,10 +220,9 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         MODULES.forEach((Module) ->  {
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
-        });              
+        });
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
-
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());
     }
 
     /**
