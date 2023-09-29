@@ -80,6 +80,7 @@ public final class Robot extends LoggedRobot  {
     for (int ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
       PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
     }
+    RobotContainer.getInstance();
     COMMAND_LOGGER.schedule();    
   }
 

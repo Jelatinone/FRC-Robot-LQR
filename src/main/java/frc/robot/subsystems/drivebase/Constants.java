@@ -55,7 +55,7 @@ public final class Constants {
       public static final Double DRIVETRAIN_GEAR_RATIO = (6.75);    
       public static final Double ROBOT_WIDTH = (0.6858);
 
-      public static final Boolean IS_NEO_SWERVE = (false);
+      public static final Boolean IS_NEO_SWERVE = (false); //TODO Change if on different drivebase
     }
 
     public static final class Limit {   

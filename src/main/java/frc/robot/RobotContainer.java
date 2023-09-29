@@ -13,7 +13,7 @@ import frc.lib.PilotProfile;
 public final class RobotContainer {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   public static RobotContainer INSTANCE = (null);
-  public static PilotProfile DRIVERBASE_PILOT = Profiles.Cody.PROFILE;
+  public static PilotProfile DRIVEBASE_PILOT = Profiles.Cody.PROFILE;
   // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
 
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
@@ -28,12 +28,12 @@ public final class RobotContainer {
     Constants.Subsystems.DRIVEBASE_SUBSYSTEM.setDefaultCommand(
       new InstantCommand(() ->
         DrivebaseSubsystem.set(
-          applyInputSqaure(applyInputDeadzone(-(Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_INPUT),
-          (Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_DEADZONE))),
-          applyInputSqaure(applyInputDeadzone((Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT),
-          (Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_DEADZONE))),
-          applyInputSqaure(applyInputDeadzone((Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_INPUT),
-          (Double)DRIVERBASE_PILOT.getPreference(PreferenceNames.ORIENTATIONAL_DEADZONE))),
+          applyInputSquare(applyInputDeadzone(-(Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_INPUT),
+          (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_DEADZONE))),
+          applyInputSquare(applyInputDeadzone((Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT),
+          (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_DEADZONE))),
+          applyInputSquare(applyInputDeadzone((Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_INPUT),
+          (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_DEADZONE))),
           () -> (false)), 
           DrivebaseSubsystem.getInstance()
     ));
@@ -41,7 +41,7 @@ public final class RobotContainer {
   }
 
   /**
-   * Remove susbystem default commands 
+   * Remove subsystem default commands
    */
   public static void removeSubsystemDefaults() {
     Constants.Subsystems.SUBSYSTEMS.forEach(SubsystemBase::removeDefaultCommand);
@@ -61,7 +61,7 @@ public final class RobotContainer {
     return (Math.abs(Input) > Deadzone)? (Input): (0.0);
   }
 
-  public static Double applyInputSqaure(final Double Input) {
+  public static Double applyInputSquare(final Double Input) {
     return (Input >= 0)? (Math.pow(Input,2)): (-Math.pow(Input,2));
   }
   // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//

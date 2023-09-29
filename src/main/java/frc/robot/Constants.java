@@ -38,7 +38,7 @@ public final class Constants {
             public static final String ORIENTATION_INPUT = ("ORIENTATION_X_INPUT");
             public static final String TRANSLATIONAL_X_DEADZONE = ("TRANSLATIONAL_X_DEADZONE");
             public static final String TRANSLATIONAL_Y_DEADZONE = ("TRANSLATIONAL_Y_DEADZONE");
-            public static final String ORIENTATIONAL_DEADZONE = ("ORIENTATIONAL_DEADZONE");
+            public static final String ORIENTATION_DEADZONE = ("ORIENTATION_DEADZONE");
         }
 
         public static final class KeybindingNames {
@@ -50,12 +50,12 @@ public final class Constants {
             public static final Integer CONTROLLER_PORT = (0);
             public static final CommandXboxController CONTROLLER = new CommandXboxController(CONTROLLER_PORT);
             public static final PilotProfile PROFILE = new PilotProfile(("Cody W."))
-                .addPreference(PreferenceNames.TRANSLATIONAL_X_INPUT, () -> CONTROLLER.getLeftX())
-                .addPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT, () -> CONTROLLER.getLeftY())
-                .addPreference(PreferenceNames.ORIENTATION_INPUT, () -> CONTROLLER.getRightX())
+                .addPreference(PreferenceNames.TRANSLATIONAL_X_INPUT, CONTROLLER::getLeftX)
+                .addPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT, CONTROLLER::getLeftY)
+                .addPreference(PreferenceNames.ORIENTATION_INPUT, CONTROLLER::getRightX)
                 .addPreference(PreferenceNames.TRANSLATIONAL_X_DEADZONE, () -> (0.1))
                 .addPreference(PreferenceNames.TRANSLATIONAL_Y_DEADZONE, () -> (0.1))
-                .addPreference(PreferenceNames.ORIENTATIONAL_DEADZONE, () -> (0.1))
+                .addPreference(PreferenceNames.ORIENTATION_DEADZONE, () -> (0.1))
                 .addKeybinding(KeybindingNames.LOCKING_TOGGLE_TRIGGER, CONTROLLER.a())
                 .addKeybinding(KeybindingNames.FIELD_ORIENTED_TOGGLE, CONTROLLER.b());
         }
