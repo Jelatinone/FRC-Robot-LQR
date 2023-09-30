@@ -1,5 +1,6 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -7,8 +8,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
+
+import frc.lib.pilot.PilotProfile;
 import frc.robot.subsystems.drivebase.DrivebaseSubsystem;
-import frc.lib.PilotProfile;
 
 // ------------------------------------------------------------[Constants Class]------------------------------------------------------------//
 public final class Constants {
@@ -22,8 +24,8 @@ public final class Constants {
     
     public static final class AdvantageKit {
         public static final Boolean REPLAY_FROM_LOG = (false);
-
         public static final Boolean LOGGING_ENABLED = (false);
+        public static final Boolean ROBOT_IS_REAL = RobotBase.isReal();
     }
 
 

@@ -29,7 +29,8 @@ import java.io.Closeable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import frc.lib.DrivebaseModule;
+
+import frc.lib.motion.control.LinearSystemModule;
 import frc.robot.subsystems.drivebase.Constants.Values.Limit;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
@@ -44,17 +45,17 @@ import static frc.robot.Constants.LOGGER;
  *
  *
  * <p> {@link frc.robot.subsystems.drivebase.Constants Constants} based implementation of swerve drivebase which utilizes
- * {@link frc.lib.DrivebaseModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
+ * {@link frc.lib.motion.control.LinearSystemModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
  * accurate azimuth positioning. This subsystem is entirely static, meaning only one instance will exist and this Instance is obtained
  * by calling {@link #getInstance()} from a static context. </p>
  *
  * @author Cody Washington (@Jelatinone)
  */
-public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
+public final class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
     private static DrivebaseSubsystem INSTANCE = (null);
 
-    private static final List<DrivebaseModule> MODULES = List.of(
+    private static final List<LinearSystemModule> MODULES = List.of(
         Hardware.Modules.FL_Module.Components.MODULE,
         Hardware.Modules.FR_Module.Components.MODULE,
         Hardware.Modules.RL_Module.Components.MODULE,
@@ -76,8 +77,8 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         getModulePositions(),
         new Pose2d());
 
-
     private static final Field2d FIELD = new Field2d();
+
     private static final RepeatCommand LOGGING_COMMAND = new RepeatCommand(new InstantCommand(() -> {
         var FieldPose = FIELD.getRobotPose();
         SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
@@ -120,7 +121,6 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGING_COMMAND.schedule();
     }
 
     @Override
@@ -136,7 +136,6 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGING_COMMAND.schedule();
     }
 
     /**
@@ -162,16 +161,15 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     @SuppressWarnings("unused")
     public static synchronized void stop() {
-        MODULES.forEach(DrivebaseModule::stop);
+        MODULES.forEach(LinearSystemModule::stop);
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/RealStates"), getMeasuredModuleStates());
     }
 
     /**
      * Closes all resources held within the subsystem, makes subsystem unusable
      */
     public void close() {
-        MODULES.forEach(DrivebaseModule::close);
         LOGGING_COMMAND.cancel();
         FIELD.close();
     }
@@ -196,7 +194,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
             }
         } else {
             set((List.of(KINEMATICS.toSwerveModuleStates(
-                (FieldOriented)? //TODO Field Oriented Drive
+                (FieldOriented)?
                     (ChassisSpeeds.fromFieldRelativeSpeeds(Translation_Y, Translation_X, Orientation, Hardware.GYROSCOPE.getRotation2d())):
                     (new ChassisSpeeds(Translation_Y, Translation_X, Orientation))))), 
                 ControlType
@@ -212,17 +210,18 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
         var DemandIterator = Demand.iterator();
-        var DemandArray = Demand.toArray(SwerveModuleState[]::new);
-        SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray,Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
-        Demand = List.of(DemandArray);  
         Demand.forEach((State) -> 
-            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)) * 1e-4) * 2);
+            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)) * 1e-4) * 4);
+        var DemandArray = Demand.toArray(SwerveModuleState[]::new);
+        SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
+        Demand = List.of(DemandArray);  
         MODULES.forEach((Module) ->  {
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
         });
+        SmartDashboard.putNumber("Drivebase/TranslationDemand",Demand.get(0).speedMetersPerSecond);
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());
     }
 
     /**
@@ -294,7 +293,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     @SuppressWarnings("unused")
     public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory Demand, final HashMap<String, Command> EventMap, final Boolean IsBlue) {
-        MODULES.forEach(DrivebaseModule::reset);
+        MODULES.forEach(LinearSystemModule::reset);
         return new SwerveAutoBuilder(INSTANCE, INSTANCE::reset, KINEMATICS, new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD), new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), INSTANCE, (EventMap), (IsBlue), (INSTANCE)).fullAuto(Demand);
     }
 
@@ -314,7 +313,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      */
     @SuppressWarnings("unused")
     public static SwerveModuleState[] getMeasuredModuleStates() {
-        return MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().map(LinearSystemModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**
@@ -323,7 +322,7 @@ public class DrivebaseSubsystem extends SubsystemBase implements Closeable, Cons
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getDemandModuleStates() {
-        return MODULES.stream().map(DrivebaseModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().map(LinearSystemModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**

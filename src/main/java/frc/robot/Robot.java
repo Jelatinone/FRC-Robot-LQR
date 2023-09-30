@@ -44,7 +44,7 @@ public final class Robot extends LoggedRobot  {
   @Override
   public void robotInit() {
     LOGGER.recordMetadata(("ProjectName"), ("PROJECT-LIQUORICE"));
-    if (isReal()) {
+    if (ROBOT_IS_REAL) {
       if(LOGGING_ENABLED) {
         LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
       }

@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 // ------------------------------------------------------------[Utility Test Class]---------------------------------------------------------//
 public final class UtilitiesTest {
 
+  /**
+   * Test CTRE Error Codes throw runtime expected exceptions 
+   */
   @Test
   void CheckErrorCTRE() {
     assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.GeneralError));
@@ -21,6 +24,9 @@ public final class UtilitiesTest {
     }
   }
 
+  /**
+   * Test REVLib Error Codes throw runtime expected exceptions
+   */
   @Test
   void CheckErrorREV() {
     assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kError));

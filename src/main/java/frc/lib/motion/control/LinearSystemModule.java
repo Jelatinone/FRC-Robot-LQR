@@ -1,6 +1,7 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
-package frc.lib;
+package frc.lib.motion.control;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
+
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
@@ -24,17 +25,15 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.util.sendable.*;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.wpilibj.Timer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.io.Closeable;
 import java.util.Objects;
 import org.littletonrobotics.junction.Logger;
-
-// ------------------------------------------------------------[Drive Module Class]---------------------------------------------------------//
+import frc.lib.MotionState;
+// -------------------------------------------------------[Linear System Module Class]------------------------------------------------------//
 /**
  * 
  * 
- * <h1> DrivebaseModule </h1>
+ * <h1> LinearSystemModule </h1>
  *
  * <p> Represents an {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} based approach to a individual swerve
  * module; a module that has full control over both the translation (velocity), and rotation(position) of it's wheel. Meaning that it
@@ -45,7 +44,7 @@ import org.littletonrobotics.junction.Logger;
  *
  * @author Cody Washington (@Jelatinone)
  */
-public final class DrivebaseModule implements Closeable, Sendable, Consumer<SwerveModuleState>  {
+public final class LinearSystemModule implements DrivebaseModule  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
     private final TrapezoidProfile.Constraints ROTATIONAL_MOTION_CONSTRAINTS;
     private final Double MAXIMUM_TRANSLATIONAL_VELOCITY;
@@ -73,7 +72,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param RotationMotionConstraints  The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
      * @param MotionControlLoop          The control loop responsible for controller azimuth output
      */
-    public DrivebaseModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor, final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
+    public LinearSystemModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor, final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
         MAXIMUM_TRANSLATIONAL_VELOCITY = MaximumTranslationVelocity;
         ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
         TRANSLATION_CONTROLLER = TranslationController;
@@ -82,7 +81,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
         STATE_SENSOR = StateSensor;
         REFERENCE_NUMBER = INSTANCE_COUNT;
         INSTANCE_COUNT++;
-        SendableRegistry.addLW(this, "DrivebaseModule", REFERENCE_NUMBER);
+        SendableRegistry.addLW(this, "LinearSystemModule", REFERENCE_NUMBER);
     }
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
@@ -92,7 +91,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param Demand      The specified demand as a translation in two-dimensional space in meters / second
      * @param ControlType The type of control of meeting the demand, whether it is open loop.
      */
-    @SuppressWarnings("unused")
+    @Override
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
         TranslationDemand = Objects.isNull(TranslationDemand)? (0.0): (TranslationDemand);
@@ -106,11 +105,11 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     }
 
     /**
-     * Set the rotation (position velocity) controller to meet a specified demand using a control type
+     * Set the rotation (position) controller to meet a specified demand using a control type
      *
      * @param Demand The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      */
-    @SuppressWarnings("all")
+    @Override
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
         Rotation2d RotationDemand = Demand.get();
         if (RotationDemand != null & !Double.isNaN(RotationDemand.getRadians())) {
@@ -137,7 +136,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param Demand      The specified demand as a {@link frc.lib.MotionState MotionState} that has translation and rotation in three-dimensional space
      * @param ControlType The type of control of meeting the velocity demand, whether it is open loop.
      */
-    @SuppressWarnings("unused, null")
+    @Deprecated
     public synchronized void set(final Supplier<MotionState> Demand, final Supplier<Boolean> ControlType) {
         var DemandMotion = Demand.get();
         DemandState = new SwerveModuleState(
@@ -155,6 +154,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *                    and Rotation as radians in a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      * @param ControlType The type of control of meeting the velocity demand, whether it is open loop.
      */
+    @Override
     public synchronized void set(final SwerveModuleState StateDemand, final Supplier<Boolean> ControlType) {
         Supplier<SwerveModuleState> OptimizedDemand = () -> SwerveModuleState.optimize(StateDemand, getMeasuredPosition());
         TargetStateCommand.cancel();
@@ -184,6 +184,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     /**
      * Close the held resources within the module, module is no longer usable after this operation.
      */
+    @Override
     public synchronized void close() {
         SendableRegistry.remove(this);
         TRANSLATION_CONTROLLER.stopMotor();
@@ -196,6 +197,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
     /**
      * Stop all the controllers within the module immediately, and cancel all subsequent motions. make another call to {@link #set(SwerveModuleState, Supplier)} to call again.
      */
+    @Override
     public void stop() {
         DemandState = new SwerveModuleState((0.0),getDemandPosition());
         TargetStateCommand.cancel();
@@ -208,13 +210,14 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @param Demand The desired state for the module to achieve
      */
+    @Override
     public void accept(final SwerveModuleState Demand) {
         set(Demand, () -> false);
     }
 
     @Override
     public void initSendable(SendableBuilder Builder) {
-        Builder.setSmartDashboardType("DrivebaseModule");
+        Builder.setSmartDashboardType("LinearSystemModule");
         Builder.addDoubleProperty(("Translation Velocity"), this::getMeasuredVelocity, (Demand) -> setVelocity(() -> Demand, () -> false));
         Builder.addDoubleProperty(("Translation Output"), this::getTranslationalOutput, null);
         Builder.addDoubleProperty(("Rotation Position"), () -> getMeasuredPosition().getRadians(), (Demand) -> setPosition(() -> new Rotation2d(Demand)));
@@ -307,7 +310,6 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param NominalVoltage The nominal voltage to compensate output of the controller to compensate voltage for
      * @return A copy of the configured controller
      */
-    @SuppressWarnings("unused")
     public static CANSparkMax configureTranslationController(final CANSparkMax Controller, final Integer AmpLimit, Double NominalVoltage) {
         Controller.restoreFactoryDefaults();
         Controller.setSmartCurrentLimit(AmpLimit);
@@ -326,7 +328,6 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * @param NominalVoltage The nominal voltage to compensate output of the controller to compensate voltage for
      * @return A copy of the configured controller
      */
-    @SuppressWarnings("unused")
     public static CANSparkMax configureRotationController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage) {
         Controller.restoreFactoryDefaults();
         Controller.setSmartCurrentLimit(AmpLimit);
@@ -343,6 +344,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} representation of the module's motion
      */
+    @Override
     public SwerveModuleState getMeasuredModuleState() {
         return STATE_SENSOR.get();
     }
@@ -352,6 +354,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A quantitative representation of the angle of the module
      */
+    @Override
     public Rotation2d getMeasuredPosition() {
         return STATE_SENSOR.get().angle;
     }
@@ -361,6 +364,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A quantitative representation of the angle of the module
      */
+    @Override
     public Double getMeasuredVelocity() {
         return STATE_SENSOR.get().speedMetersPerSecond;
     }
@@ -370,7 +374,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} representation of the module's motion
      */
-    @SuppressWarnings("unused")
+    @Override
     public SwerveModuleState getDemandModuleState() {
         return DemandState;
     }
@@ -380,7 +384,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A quantitative representation of the angle of the module
      */
-    @SuppressWarnings("unused")
+    @Override
     public Rotation2d getDemandPosition() {
         return DemandState.angle;
     }
@@ -390,7 +394,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      *
      * @return A quantitative representation of the angle of the module
      */
-    @SuppressWarnings("unused")
+    @Override
     public Double getDemandVelocity() {
         return DemandState.speedMetersPerSecond;
     }
@@ -400,7 +404,7 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * 
      * @return A quantitative representation of the module's rotation percent output
      */
-    @SuppressWarnings("unused")
+    @Override
     public Double getRotationalOutput() {
         return ROTATION_CONTROLLER.get();
     }
@@ -410,8 +414,18 @@ public final class DrivebaseModule implements Closeable, Sendable, Consumer<Swer
      * 
      * @return A quantitative representation of the module's translation percent output
      */
-    @SuppressWarnings("unused")
+    @Override
     public Double getTranslationalOutput() {
         return TRANSLATION_CONTROLLER.get();
+    }
+
+  /**
+   * Shorthand for receiving the measured (encoder read, actual) motion of the module; must be implemented
+   * 
+   * @return The measured motion state
+   */
+    @Override
+    public SwerveModuleState get() {
+        return STATE_SENSOR.get();
     }
 }

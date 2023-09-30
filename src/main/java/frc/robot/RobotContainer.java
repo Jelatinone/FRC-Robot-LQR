@@ -4,10 +4,10 @@ package frc.robot;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.DrivebaseSubsystem;
+import frc.lib.pilot.PilotProfile;
 import frc.robot.Constants.Profiles;
 import frc.robot.Constants.Profiles.KeybindingNames;
 import frc.robot.Constants.Profiles.PreferenceNames;
-import frc.lib.PilotProfile;
 
 // ----------------------------------------------------------[Robot Container Class]--------------------------------------------------------//
 public final class RobotContainer {
