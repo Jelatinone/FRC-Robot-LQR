@@ -1,13 +1,12 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib.motion.control;
-import edu.wpi.first.math.geometry.Rotation2d;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.util.sendable.SendableBuilder;
-
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.util.sendable.Sendable;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.io.Closeable;
@@ -18,7 +17,7 @@ import java.io.Closeable;
  * 
  * <h1> DrivebaseModule </h1>
  * 
- * <p> An interface which represents any kind of drivebase subunit module, this module can <i>optionally</i> implement 
+ * <p> An common interface which represents any kind of drivebase subunit module, this module can <i>optionally</i> implement 
  * methods for translation and/or rotation as needed, meaning a drivebase module can represent any type of drivebase's
  * modules, whether it is a pair of tank drive motors, a mecanum wheel, or a swerve module. </p>
  * 

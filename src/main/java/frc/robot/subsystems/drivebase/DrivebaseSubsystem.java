@@ -119,8 +119,13 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
     }
 
     @Override
@@ -134,8 +139,13 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
     }
 
     /**
@@ -161,9 +171,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      */
     @SuppressWarnings("unused")
     public static synchronized void stop() {
-        MODULES.forEach(LinearSystemModule::stop);
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
-        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        MODULES.forEach(LinearSystemModule::stop);    
     }
 
     /**
@@ -183,9 +191,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @param ControlType   Whether to use OpenLoop control
      */
     public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, Supplier<Boolean> ControlType) {
-        SmartDashboard.putNumber(("Drivebase/Translation (leftX) Input"), Translation_X);
-        SmartDashboard.putNumber(("Drivebase/Translation (leftY) Input"), Translation_Y);
-        SmartDashboard.putNumber(("Drivebase/Orientation (rightX) Input"), Orientation);
+        LOGGER.recordOutput(("Drivebase/Translation (leftX) Input"), Translation_X);
+        LOGGER.recordOutput(("Drivebase/Translation (leftY) Input"), Translation_Y);
+        LOGGER.recordOutput(("Drivebase/Orientation (rightX) Input"), Orientation);
         if((Math.abs(Translation_X) <= (2e-2)) && (Math.abs(Translation_Y) <= (2e-2)) && (Math.abs(Orientation) <= (2e-2))) {
             if (LockingEnabled) {
                 set();
@@ -219,9 +227,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
         });
-        SmartDashboard.putNumber("Drivebase/TranslationDemand",Demand.get(0).speedMetersPerSecond);
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
-        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
     }
 
     /**
@@ -244,7 +249,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new SwerveModuleState((0.0), new Rotation2d(Units.degreesToRadians((45)))),
         new SwerveModuleState((0.0), new Rotation2d(Units.degreesToRadians((225)))),
         new SwerveModuleState((0.0), new Rotation2d(Units.degreesToRadians((135))))),
-        () -> (false));
+        () -> (true));
     }
 
     /**
@@ -323,6 +328,18 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      */
     public static SwerveModuleState[] getDemandModuleStates() {
         return MODULES.stream().map(LinearSystemModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
+    }
+
+    /**
+     * Get an array representing the converted Output {@link edu.wpi.first.math.kinematics.SwerveModuleState state} of each module in order
+     * 
+     * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
+     */
+    public static SwerveModuleState[] getOutputModuleStates() {
+        return MODULES.parallelStream().map((Module) -> {
+            return new SwerveModuleState(Module.getTranslationalOutput() * Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
+                Module.getDemandPosition());
+        }).toArray(SwerveModuleState[]::new);
     }
 
     /**

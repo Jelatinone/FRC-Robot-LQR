@@ -43,18 +43,19 @@ import frc.lib.MotionState;
  * the necessary voltage using a {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} control loop. <p>
  *
  * @author Cody Washington (@Jelatinone)
+ * @see frc.lib.motion.control.DrivebaseModule DrivebaseModule
  */
 public final class LinearSystemModule implements DrivebaseModule  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
     private final TrapezoidProfile.Constraints ROTATIONAL_MOTION_CONSTRAINTS;
-    private final Double MAXIMUM_TRANSLATIONAL_VELOCITY;
     private final LinearSystemLoop<N2, N1, N1> MOTION_CONTROL_LOOP;
+    private final Double TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY;        
     private final MotorControllerGroup TRANSLATION_CONTROLLER;
     private final MotorControllerGroup ROTATION_CONTROLLER;
     private final Supplier<SwerveModuleState> STATE_SENSOR;
     private final Integer REFERENCE_NUMBER;
     private static final Logger LOGGER = Logger.getInstance();
-    private static Integer INSTANCE_COUNT = 0;    
+    private static Integer INSTANCE_COUNT = (0); 
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
     private RepeatCommand TargetStateCommand = new RepeatCommand(new InstantCommand());
@@ -73,7 +74,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @param MotionControlLoop          The control loop responsible for controller azimuth output
      */
     public LinearSystemModule(final MotorControllerGroup TranslationController, final MotorControllerGroup RotationController, final Supplier<SwerveModuleState> StateSensor, final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
-        MAXIMUM_TRANSLATIONAL_VELOCITY = MaximumTranslationVelocity;
+        TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY = MaximumTranslationVelocity;
         ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
         TRANSLATION_CONTROLLER = TranslationController;
         ROTATION_CONTROLLER = RotationController;
@@ -81,7 +82,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         STATE_SENSOR = StateSensor;
         REFERENCE_NUMBER = INSTANCE_COUNT;
         INSTANCE_COUNT++;
-        SendableRegistry.addLW(this, "LinearSystemModule", REFERENCE_NUMBER);
+        SendableRegistry.addLW(this, "LinearSystemModule", REFERENCE_NUMBER); //TODO SIMULATED DEVICE SUPPORT
     }
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
@@ -97,7 +98,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         TranslationDemand = Objects.isNull(TranslationDemand)? (0.0): (TranslationDemand);
         if (!Double.isNaN(TranslationDemand) && Math.abs(TranslationDemand - getTranslationalOutput()) > (2e-2)) {
             if (ControlType.get()) {
-                TRANSLATION_CONTROLLER.set(TranslationDemand * (MAXIMUM_TRANSLATIONAL_VELOCITY));
+                TRANSLATION_CONTROLLER.set(TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
             } else {
                 TRANSLATION_CONTROLLER.set(TranslationDemand);
             }
@@ -161,7 +162,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         TargetStateCommand = new ParallelCommandGroup(
         new InstantCommand(() -> 
             setPosition(() -> new Rotation2d(OptimizedDemand.get().angle.getRadians()))),
-         new InstantCommand(() -> 
+        new InstantCommand(() -> 
             setVelocity(() -> OptimizedDemand.get().speedMetersPerSecond, ControlType))
         ).repeatedly();
         TargetStateCommand.schedule();
@@ -199,10 +200,10 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     @Override
     public void stop() {
-        DemandState = new SwerveModuleState((0.0),getDemandPosition());
-        TargetStateCommand.cancel();
-        TRANSLATION_CONTROLLER.stopMotor();
-        ROTATION_CONTROLLER.stopMotor();
+        DemandState = new SwerveModuleState((0.0),new Rotation2d(0.0));
+        TRANSLATION_CONTROLLER.set((0.0));
+        ROTATION_CONTROLLER.set((0.0));
+        TargetStateCommand.cancel();   
     }
 
     /**
@@ -418,7 +419,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
     public Double getTranslationalOutput() {
         return TRANSLATION_CONTROLLER.get();
     }
-
+    
   /**
    * Shorthand for receiving the measured (encoder read, actual) motion of the module; must be implemented
    * 

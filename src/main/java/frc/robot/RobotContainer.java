@@ -35,9 +35,9 @@ public final class RobotContainer {
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_X_DEADZONE))),
           applyInputSquare(applyInputDeadzone(-(Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_INPUT),
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.TRANSLATIONAL_Y_DEADZONE))),
-          applyInputSquare(applyInputDeadzone((Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_INPUT),
+          applyInputSquare(applyInputDeadzone(-(Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_INPUT),
           (Double) DRIVEBASE_PILOT.getPreference(PreferenceNames.ORIENTATION_DEADZONE))),
-          () -> (false)), 
+          () -> (true)), 
           DrivebaseSubsystem.getInstance()
     ));
 
