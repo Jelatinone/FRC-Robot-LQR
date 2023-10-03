@@ -24,6 +24,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import frc.lib.motion.control.LinearSystemModule;
+import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 
 import java.util.function.Supplier;
 
@@ -41,12 +42,12 @@ public final class Constants {
     }
 
     public static final class PathPlanner {
-      public static final Double TRANSLATION_KP = (0.2); // {15, 3.25, 2.75, 2.5, 2.1, 2, 0.018, 0.03, 0.004, 0.001}
-      public static final Double TRANSLATION_KI = (0.0); 
-      public static final Double TRANSLATION_KD = (0.0);
-      public static final Double ROTATION_KP = (0.008); // {6.25, 12.5, 15}
-      public static final Double ROTATION_KI = (0.0);
-      public static final Double ROTATION_KD = (0.0);
+      public static final Double TRANSLATION_KP = (Chassis.IS_NEO_SWERVE)? (11.0): (0.2); //FALCON SWERVE: {15, 3.25, 2.75, 2.5, 2.1, 2, 0.018, 0.03, 0.004, 0.001}
+      public static final Double TRANSLATION_KI = (Chassis.IS_NEO_SWERVE)? (0.0): (0.0); 
+      public static final Double TRANSLATION_KD = (Chassis.IS_NEO_SWERVE)? (0.0): (0.0);
+      public static final Double ROTATION_KP = (Chassis.IS_NEO_SWERVE)? (0.0): (0.008); //FALCON SWERVE: {6.25, 12.5, 15}
+      public static final Double ROTATION_KI = (Chassis.IS_NEO_SWERVE)? (0.0): (0.0);
+      public static final Double ROTATION_KD = (Chassis.IS_NEO_SWERVE)? (0.0): (0.0);
     }
 
     public static final class Chassis {
@@ -55,7 +56,7 @@ public final class Constants {
       public static final Double DRIVETRAIN_GEAR_RATIO = (6.75);    
       public static final Double ROBOT_WIDTH = (0.6858);
 
-      public static final Boolean IS_NEO_SWERVE = (false); //TODO Change if on different drivebase
+      public static final Boolean IS_NEO_SWERVE = (true); //TODO Change if on different drivebase
     }
 
     public static final class Limit {   
@@ -79,7 +80,7 @@ public final class Constants {
 
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
-            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (-313.006);
+            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (Chassis.IS_NEO_SWERVE)? (40.166016): (-313.006);
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
@@ -98,9 +99,9 @@ public final class Constants {
             public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
             public static final Integer AZIMUTH_AMP_LIMIT = (0);
             public static final Integer LINEAR_AMP_LIMIT = (0);
-            public static final Integer AZIMUTH_ID = (21);                       
-            public static final Integer LINEAR_ID = (11);    
-            public static final Integer SENSOR_ID = (4);
+            public static final Integer AZIMUTH_ID = (Chassis.IS_NEO_SWERVE)? (21): (21);                       
+            public static final Integer LINEAR_ID = (Chassis.IS_NEO_SWERVE)? (11): (11);    
+            public static final Integer SENSOR_ID = (Chassis.IS_NEO_SWERVE)? (31): (4);
 
 
           }
@@ -172,7 +173,7 @@ public final class Constants {
 
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
-            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (-68.582);
+            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (Chassis.IS_NEO_SWERVE)? (114.257812): (-68.582);
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
@@ -189,9 +190,9 @@ public final class Constants {
             public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
             public static final Integer AZIMUTH_AMP_LIMIT = (0);
             public static final Integer LINEAR_AMP_LIMIT = (0);
-            public static final Integer AZIMUTH_ID = (22);                       
-            public static final Integer LINEAR_ID = (12);    
-            public static final Integer SENSOR_ID = (5);
+            public static final Integer AZIMUTH_ID = (Chassis.IS_NEO_SWERVE)? (22): (22);                       
+            public static final Integer LINEAR_ID = (Chassis.IS_NEO_SWERVE)? (12): (12);    
+            public static final Integer SENSOR_ID = (Chassis.IS_NEO_SWERVE)? (32): (5);
           }
 
           public static final class Components {
@@ -261,7 +262,7 @@ public final class Constants {
 
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
-            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (134.209);
+            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (Chassis.IS_NEO_SWERVE)? (302.695312): (134.209);
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
@@ -278,9 +279,9 @@ public final class Constants {
             public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
             public static final Integer AZIMUTH_AMP_LIMIT = (0);
             public static final Integer LINEAR_AMP_LIMIT = (0);
-            public static final Integer AZIMUTH_ID = (23);                       
-            public static final Integer LINEAR_ID = (13);    
-            public static final Integer SENSOR_ID = (6);
+            public static final Integer AZIMUTH_ID = (Chassis.IS_NEO_SWERVE)? (23): (23);                       
+            public static final Integer LINEAR_ID = (Chassis.IS_NEO_SWERVE)? (13): (13);    
+            public static final Integer SENSOR_ID = (Chassis.IS_NEO_SWERVE)? (33): (6);
           }
 
           public static final class Components {
@@ -350,7 +351,7 @@ public final class Constants {
 
           public static final class Values {
             public static final Double MAXIMUM_AZIMUTH_ACCELERATION = (Math.PI*2);    
-            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (-257.783);
+            public static final Double AZIMUTH_ENCODER_POSITION_OFFSET = (Chassis.IS_NEO_SWERVE)? (358.154297): (-257.783);
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
@@ -367,9 +368,9 @@ public final class Constants {
             public static final Double LINEAR_NOMINAL_VOLTAGE = (0.0);
             public static final Integer AZIMUTH_AMP_LIMIT = (0);
             public static final Integer LINEAR_AMP_LIMIT = (0);
-            public static final Integer AZIMUTH_ID = (24);                       
-            public static final Integer LINEAR_ID = (14);    
-            public static final Integer SENSOR_ID = (7);
+            public static final Integer AZIMUTH_ID = (Chassis.IS_NEO_SWERVE)? (24): (24);                       
+            public static final Integer LINEAR_ID = (Chassis.IS_NEO_SWERVE)? (14): (14);    
+            public static final Integer SENSOR_ID = (Chassis.IS_NEO_SWERVE)? (34): (7);
           }
 
           public static final class Components {
