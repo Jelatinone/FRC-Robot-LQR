@@ -28,16 +28,18 @@ import static frc.robot.Constants.AdvantageKit.*;
 public final class Robot extends LoggedRobot  {
   // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
   private static final RepeatCommand COMMAND_LOGGER = new RepeatCommand(new InstantCommand(() -> {
-    Threads.setCurrentThreadPriority((true), (99));
-    List<String> ClientNames, ClientAddresses;
-    ClientNames = new ArrayList<>(); ClientAddresses = new ArrayList<>();
-    Stream.of(NetworkTableInstance.getDefault().getConnections()).forEach((Connection) -> {
-       ClientNames.add(Connection.remote_id);
-       ClientAddresses.add(Connection.remote_ip);
-    });
-    LOGGER.recordOutput(("NTClient/Names"), ClientNames.toArray(String[]::new));
-    LOGGER.recordOutput(("NTClient/Addresses"), ClientAddresses.toArray(String[]::new));
-    Threads.setCurrentThreadPriority((true), (20));
+    if(LOGGING_ENABLED) {
+      Threads.setCurrentThreadPriority((true), (99));
+      List<String> ClientNames, ClientAddresses;
+      ClientNames = new ArrayList<>(); ClientAddresses = new ArrayList<>();
+      Stream.of(NetworkTableInstance.getDefault().getConnections()).forEach((Connection) -> {
+        ClientNames.add(Connection.remote_id);
+        ClientAddresses.add(Connection.remote_ip);
+      });
+      LOGGER.recordOutput(("NTClient/Names"), ClientNames.toArray(String[]::new));
+      LOGGER.recordOutput(("NTClient/Addresses"), ClientAddresses.toArray(String[]::new));
+      Threads.setCurrentThreadPriority((true), (20));      
+    }
   }));
   // ---------------------------------------------------------------[Robot]-----------------------------------------------------------------//
   @SuppressWarnings("ExtractMethodRecommender")
@@ -49,7 +51,7 @@ public final class Robot extends LoggedRobot  {
         LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
       }
       LOGGER.addDataReceiver(new NT4Publisher());
-      LoggedPowerDistribution.getInstance((POWER_DISTRIBUTION_ID), ModuleType.kAutomatic);
+      LoggedPowerDistribution.getInstance((POWER_DISTRIBUTION_ID), ModuleType.kRev);
     } else {
       if(REPLAY_FROM_LOG) {
         setUseTiming(TURBO_MODE);

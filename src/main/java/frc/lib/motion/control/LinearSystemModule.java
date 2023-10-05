@@ -1,7 +1,6 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib.motion.control;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
@@ -10,6 +9,7 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.revrobotics.CANSparkMax.IdleMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.CANSparkMax;
 import edu.wpi.first.wpilibj.motorcontrol.MotorControllerGroup;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -21,10 +21,13 @@ import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.util.sendable.*;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.*;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.hal.SimDevice;
+import edu.wpi.first.hal.SimDouble;
 import java.util.function.Supplier;
 import java.util.Objects;
 import org.littletonrobotics.junction.Logger;
@@ -53,9 +56,19 @@ public final class LinearSystemModule implements DrivebaseModule  {
     private final MotorControllerGroup TRANSLATION_CONTROLLER;
     private final MotorControllerGroup ROTATION_CONTROLLER;
     private final Supplier<SwerveModuleState> STATE_SENSOR;
-    private final Integer REFERENCE_NUMBER;
+    private final Integer REFERENCE_NUMBER;   
+
+    private static final Boolean IS_SIMULATED = RobotBase.isSimulation();
     private static final Logger LOGGER = Logger.getInstance();
     private static Integer INSTANCE_COUNT = (0); 
+
+    private SimDouble MEASURED_POSITION_AZIMUTH = (null);    
+    private SimDouble MEASURED_VELOCITY_LINEAR = (null);    
+    private SimDouble DEMAND_POSITION_AZIMUTH = (null);    
+    private SimDouble DEMAND_VELOCITY_LINEAR = (null);    
+    private SimDouble OUTPUT_VELOCITY_AZIMUTH = (null);
+    private SimDouble OUTPUT_VELOCITY_LINEAR = (null);    
+    private SimDevice SIMULATED_MODULE = (null);
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
     private RepeatCommand TargetStateCommand = new RepeatCommand(new InstantCommand());
@@ -82,7 +95,16 @@ public final class LinearSystemModule implements DrivebaseModule  {
         STATE_SENSOR = StateSensor;
         REFERENCE_NUMBER = INSTANCE_COUNT;
         INSTANCE_COUNT++;
-        SendableRegistry.addLW(this, "LinearSystemModule", REFERENCE_NUMBER); //TODO SIMULATED DEVICE SUPPORT
+        SendableRegistry.addLW((this), ("LQR-Module"), REFERENCE_NUMBER);
+        if(IS_SIMULATED | Objects.isNull(SIMULATED_MODULE)) {
+            SIMULATED_MODULE = SimDevice.create(("LQR-Module"), REFERENCE_NUMBER);
+            DEMAND_POSITION_AZIMUTH = SIMULATED_MODULE.createDouble(("DEMAND-POSITION-AZIMUTH"),SimDevice.Direction.kOutput, (DemandState.angle.getDegrees()));
+            OUTPUT_VELOCITY_AZIMUTH = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-AZIMUTH"), SimDevice.Direction.kOutput, (0.0));
+            MEASURED_POSITION_AZIMUTH =  SIMULATED_MODULE.createDouble(("MEASURED-POSITION-AZIMUTH"), SimDevice.Direction.kOutput, (STATE_SENSOR.get().angle.getDegrees()));
+            DEMAND_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("DEMAND-VELOCITY-LINEAR"), SimDevice.Direction.kOutput,(DemandState.speedMetersPerSecond));
+            OUTPUT_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (0.0));
+            MEASURED_VELOCITY_LINEAR  = SIMULATED_MODULE.createDouble(("MEASURED-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (StateSensor.get().speedMetersPerSecond));
+        }
     }
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
@@ -95,12 +117,22 @@ public final class LinearSystemModule implements DrivebaseModule  {
     @Override
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
+        if(IS_SIMULATED) {
+            DEMAND_VELOCITY_LINEAR.set(TranslationDemand);
+        }
         TranslationDemand = Objects.isNull(TranslationDemand)? (0.0): (TranslationDemand);
         if (!Double.isNaN(TranslationDemand) && Math.abs(TranslationDemand - getTranslationalOutput()) > (2e-2)) {
             if (ControlType.get()) {
                 TRANSLATION_CONTROLLER.set(TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
+                if(IS_SIMULATED) {
+                    OUTPUT_VELOCITY_LINEAR.set(TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
+                }
             } else {
                 TRANSLATION_CONTROLLER.set(TranslationDemand);
+                if(IS_SIMULATED) {
+                    OUTPUT_VELOCITY_LINEAR.set(TranslationDemand);
+                }
+
             }
         }
     }
@@ -113,21 +145,27 @@ public final class LinearSystemModule implements DrivebaseModule  {
     @Override
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
         Rotation2d RotationDemand = Demand.get();
-        if (RotationDemand != null & !Double.isNaN(RotationDemand.getRadians())) {
-            double IntervalTime;
+        if(IS_SIMULATED) {
+            DEMAND_POSITION_AZIMUTH.set(RotationDemand.getDegrees());
+        }        
+        if (RotationDemand != null & !Double.isNaN(Objects.requireNonNull(RotationDemand).getRadians())) {
+            double DiscretizationTimestep;
             if (TimeReference != (0)) {
-                var RealTime = Timer.getFPGATimestamp();
-                IntervalTime = RealTime - TimeReference;
-                TimeReference = RealTime;
+                var MeasuredTime = Timer.getFPGATimestamp();
+                DiscretizationTimestep = MeasuredTime - TimeReference;
+                TimeReference = MeasuredTime;
             } else {
-                IntervalTime = (0.02);
+                DiscretizationTimestep = (0.02);
             }
-            TrapezoidProfile.State targetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
-            TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, targetPositionState, TargetPositionStateReference).calculate(IntervalTime);
+            TrapezoidProfile.State TargetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
+            TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, TargetPositionState, TargetPositionStateReference).calculate(DiscretizationTimestep);
             MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position, TargetPositionStateReference.velocity);
             MOTION_CONTROL_LOOP.correct(VecBuilder.fill(STATE_SENSOR.get().angle.getRadians()));
-            MOTION_CONTROL_LOOP.predict(IntervalTime);
+            MOTION_CONTROL_LOOP.predict(DiscretizationTimestep);
             ROTATION_CONTROLLER.setVoltage(MOTION_CONTROL_LOOP.getU((0)));
+            if(IS_SIMULATED) {
+                OUTPUT_VELOCITY_AZIMUTH.set(ROTATION_CONTROLLER.get());
+            }
         }
     }
 
@@ -187,11 +225,13 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     @Override
     public synchronized void close() {
+        stop();        
         SendableRegistry.remove(this);
-        TRANSLATION_CONTROLLER.stopMotor();
-        ROTATION_CONTROLLER.stopMotor();
         TRANSLATION_CONTROLLER.close();
         ROTATION_CONTROLLER.close();
+        if(!Objects.isNull(SIMULATED_MODULE))  {
+            SIMULATED_MODULE.close();
+        }
         TargetStateCommand.cancel();
     }
 
@@ -200,10 +240,19 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     @Override
     public void stop() {
-        DemandState = new SwerveModuleState((0.0),new Rotation2d(0.0));
-        TRANSLATION_CONTROLLER.set((0.0));
-        ROTATION_CONTROLLER.set((0.0));
-        TargetStateCommand.cancel();   
+        DemandState = new SwerveModuleState((0.0),new Rotation2d((0.0)));
+        TRANSLATION_CONTROLLER.stopMotor();
+        ROTATION_CONTROLLER.stopMotor();
+        TargetStateCommand.cancel(); 
+        if(IS_SIMULATED) {
+            var MeasuredState = STATE_SENSOR.get();            
+            OUTPUT_VELOCITY_AZIMUTH.set((0));
+            OUTPUT_VELOCITY_LINEAR.set((0));
+            DEMAND_POSITION_AZIMUTH.set((0));
+            DEMAND_VELOCITY_LINEAR.set((0));
+            MEASURED_POSITION_AZIMUTH.set(MeasuredState.angle.getDegrees());
+            MEASURED_VELOCITY_LINEAR.set(MeasuredState.speedMetersPerSecond);              
+        }
     }
 
     /**
@@ -218,12 +267,12 @@ public final class LinearSystemModule implements DrivebaseModule  {
 
     @Override
     public void initSendable(SendableBuilder Builder) {
-        Builder.setSmartDashboardType("LinearSystemModule");
+        Builder.setSmartDashboardType(("LinearSystemModule"));
         Builder.addDoubleProperty(("Translation Velocity"), this::getMeasuredVelocity, (Demand) -> setVelocity(() -> Demand, () -> false));
-        Builder.addDoubleProperty(("Translation Output"), this::getTranslationalOutput, null);
+        Builder.addDoubleProperty(("Translation Output"), this::getTranslationalOutput, (null));
         Builder.addDoubleProperty(("Rotation Position"), () -> getMeasuredPosition().getRadians(), (Demand) -> setPosition(() -> new Rotation2d(Demand)));
         Builder.addDoubleProperty(("Rotation Velocity"), () -> TargetPositionStateReference.velocity, (null));
-        Builder.addDoubleProperty(("Rotation Output"), this::getRotationalOutput, null);
+        Builder.addDoubleProperty(("Rotation Output"), this::getRotationalOutput, (null));
     }
 
     /**
@@ -245,6 +294,8 @@ public final class LinearSystemModule implements DrivebaseModule  {
         LOGGER.recordOutput((Prefix + "MeasuredTranslationVelocity"), getMeasuredVelocity());
         LOGGER.recordOutput((Prefix + "OutputAzimuthPercent"), ROTATION_CONTROLLER.get());
         LOGGER.recordOutput((Prefix + "OutputTranslationPercent"), TRANSLATION_CONTROLLER.get());
+        MEASURED_VELOCITY_LINEAR.set(STATE_SENSOR.get().speedMetersPerSecond);
+        MEASURED_POSITION_AZIMUTH.set(STATE_SENSOR.get().angle.getDegrees());
     }
 
     /**
@@ -256,7 +307,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @param Deadband       Desired percent deadband of controller inputs
      * @return A copy of the configured controller
      */
-    public static WPI_TalonFX configureRotationController(final WPI_TalonFX Controller, final WPI_CANCoder AzimuthEncoder, final StatorCurrentLimitConfiguration CurrentLimit, final Double Deadband) {
+    public static WPI_TalonFX configureController(final WPI_TalonFX Controller, final WPI_CANCoder AzimuthEncoder, final StatorCurrentLimitConfiguration CurrentLimit, final Double Deadband) {
         Controller.configFactoryDefault();
         Controller.setInverted(TalonFXInvertType.CounterClockwise);
         Controller.setNeutralMode(NeutralMode.Brake);
@@ -304,24 +355,6 @@ public final class LinearSystemModule implements DrivebaseModule  {
     }
 
     /**
-     * Configure a {@link com.revrobotics.CANSparkMax CANSparkMax} translation controller to swerve module specifications
-     *
-     * @param Controller     Controller that is to be configured
-     * @param AmpLimit       The current limit of the controller measured in amps
-     * @param NominalVoltage The nominal voltage to compensate output of the controller to compensate voltage for
-     * @return A copy of the configured controller
-     */
-    public static CANSparkMax configureTranslationController(final CANSparkMax Controller, final Integer AmpLimit, Double NominalVoltage) {
-        Controller.restoreFactoryDefaults();
-        Controller.setSmartCurrentLimit(AmpLimit);
-        Controller.enableVoltageCompensation(NominalVoltage);
-        Controller.setInverted((true));
-        Controller.setIdleMode(IdleMode.kBrake);
-        Controller.burnFlash();
-        return Controller;
-    }
-
-    /**
      * Configure a {@link com.revrobotics.CANSparkMax CANSparkMax} rotation controller to swerve module specifications
      *
      * @param Controller     Controller that is to be configured
@@ -329,14 +362,23 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @param NominalVoltage The nominal voltage to compensate output of the controller to compensate voltage for
      * @return A copy of the configured controller
      */
-    public static CANSparkMax configureRotationController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage) {
+    public static CANSparkMax configureController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage) {
+        Controller.clearFaults();
         Controller.restoreFactoryDefaults();
-        Controller.setSmartCurrentLimit(AmpLimit);
-        Controller.enableVoltageCompensation(NominalVoltage);
         Controller.setInverted((true));
+        Controller.setSmartCurrentLimit(AmpLimit);
         Controller.setIdleMode(IdleMode.kBrake);
+        Controller.enableVoltageCompensation(NominalVoltage);
         Controller.burnFlash();
         return Controller;
+    }
+
+    public static RelativeEncoder configureEncoder(final RelativeEncoder Encoder, final Double VelocityConversionFactor, final Double PositionConversionFactor, final Boolean Inverted) {
+        Encoder.setPosition((0.0));
+        Encoder.setVelocityConversionFactor(VelocityConversionFactor);
+        Encoder.setPositionConversionFactor(PositionConversionFactor);
+        Encoder.setInverted(Inverted);
+        return Encoder;
     }
     // --------------------------------------------------------------[Accessors]--------------------------------------------------------------//
 

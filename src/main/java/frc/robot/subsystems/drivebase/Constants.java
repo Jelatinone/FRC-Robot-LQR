@@ -8,6 +8,7 @@ import com.ctre.phoenix.sensors.WPI_CANCoder;
 import com.ctre.phoenix.sensors.WPI_Pigeon2;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkMaxLowLevel;
+import com.revrobotics.RelativeEncoder;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
@@ -34,11 +35,11 @@ public final class Constants {
   public static final class Values {
 
     public static final class ComponentData {
-      public static final Double ENCODER_SENSITIVITY = (2048.0);    
-      public static final Double SCALE_FACTOR = (1.0/50.0);   
-      public static final Double AZIMUTH_DEADBAND = (0.06);
       public static final StatorCurrentLimitConfiguration DRIVE_CURRENT_LIMIT = new StatorCurrentLimitConfiguration((true), (60), (60), (0));      
-      public static final StatorCurrentLimitConfiguration AZIMUTH_CURRENT_LIMIT = new StatorCurrentLimitConfiguration((true), (20), (20), (0));
+      public static final StatorCurrentLimitConfiguration AZIMUTH_CURRENT_LIMIT = new StatorCurrentLimitConfiguration((true), (20), (20), (0));      
+      public static final Double ENCODER_SENSITIVITY = (2048.0);   
+      public static final Double AZIMUTH_DEADBAND = (0.06);       
+      public static final Double SCALE_FACTOR = (1.0/50.0);   
     }
 
     public static final class PathPlanner {
@@ -54,9 +55,12 @@ public final class Constants {
       public static final Double WHEEL_DIAMETER = (0.1016);          
       public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;      
       public static final Double DRIVETRAIN_GEAR_RATIO = (6.75);    
-      public static final Double ROBOT_WIDTH = (0.6858);
+      public static final Double DRIVETRAIN_WIDTH = (0.6858);
+      public static final Boolean IS_NEO_SWERVE = (false);
 
-      public static final Boolean IS_NEO_SWERVE = (true); //TODO Change if on different drivebase
+      public static final Double AZIMUTH_ENCODER_POSITION_FACTOR = ((WHEEL_DIAMETER * Math.PI) / DRIVETRAIN_GEAR_RATIO);
+
+      public static final Double LINEAR_ENCODER_VELOCITY_FACTOR = (AZIMUTH_ENCODER_POSITION_FACTOR / 60.0);
     }
 
     public static final class Limit {   
@@ -67,7 +71,7 @@ public final class Constants {
 
     public static final class Port {
       public static final Integer PATHPLANNER_SERVER_PORT = (6969);     
-      public static final Integer GYROSCOPE_ID = (3);   
+      public static final Integer GYROSCOPE_ID = (Chassis.IS_NEO_SWERVE)? (1): (3);   
 
     }
   }
@@ -84,12 +88,10 @@ public final class Constants {
             public static final Double MAXIMUM_AZIMUTH_VOLTAGE = (12.0);            
             public static final Double MAXIMUM_AZIMUTH_VELOCITY = (5.4);
             public static final Double MAXIMUM_LINEAR_VELOCITY = (5.4);
-            public static final Double ACCELERATION_GAIN = (0.035); //TODO <---- Find Acceleration Gain (kA) of Linear Position System, Volts/(Units/Sec^2), DO NOT DEPLOY THIS UNTIL FOUND
-            public static final Double VELOCITY_GAIN = (0.035); //TODO <---- Find Velocity Gain (kV) of Linear Position System, Volts/(Units/Sec), DO NOT DEPLOY THIS UNTIL FOUND
-
+            public static final Double ACCELERATION_GAIN = (1.0); //TODO <---- Find Acceleration Gain (kA) of Linear Position System, Volts/(Units/Sec^2), DO NOT DEPLOY THIS UNTIL FOUND
+            public static final Double VELOCITY_GAIN = (1.0); //TODO <---- Find Velocity Gain (kV) of Linear Position System, Volts/(Units/Sec), DO NOT DEPLOY THIS UNTIL FOUND
             public static final Double LINEAR_ENCODER_SENSITIVITY = (2048.0);     
             public static final Double ENCODER_SENSITIVITY = (4096.0);   
-
             public static final Double MODEL_VELOCITY_ACCURACY_DEGREES = (7e-5);
             public static final Double MODEL_POSITION_ACCURACY_RPM = (2.5e-4);
             public static final Double DISCRETIZATION_TIMESTEP = (1/50.0);
@@ -109,7 +111,7 @@ public final class Constants {
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureTranslationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
                       Values.LINEAR_MOTOR_TYPE),
                       Values.LINEAR_AMP_LIMIT,
@@ -117,25 +119,24 @@ public final class Constants {
               (LinearSystemModule.configureTranslationController(new WPI_TalonFX(
                       Values.LINEAR_ID),
                       Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureRotationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.AZIMUTH_ID,
                       Values.AZIMUTH_MOTOR_TYPE),
                       Values.AZIMUTH_AMP_LIMIT,
                       Values.AZIMUTH_NOMINAL_VOLTAGE)):
-              (LinearSystemModule.configureRotationController(new WPI_TalonFX(
+              (LinearSystemModule.configureController(new WPI_TalonFX(
                       Values.AZIMUTH_ID),
                       AZIMUTH_SENSOR,
                       Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
                       Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final  RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (() -> {
-                assert LINEAR_CONTROLLER instanceof CANSparkMax;
-                return new SwerveModuleState(
-                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
-                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
-                );
-              }):
+              (() -> new SwerveModuleState(
+                      LINEAR_ENCODER.getVelocity(),
+                      new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+              )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
@@ -198,7 +199,7 @@ public final class Constants {
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureTranslationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
                       Values.LINEAR_MOTOR_TYPE),
                       Values.LINEAR_AMP_LIMIT,
@@ -206,31 +207,30 @@ public final class Constants {
               (LinearSystemModule.configureTranslationController(new WPI_TalonFX(
                       Values.LINEAR_ID),
                       Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureRotationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.AZIMUTH_ID,
                       Values.AZIMUTH_MOTOR_TYPE),
                       Values.AZIMUTH_AMP_LIMIT,
                       Values.AZIMUTH_NOMINAL_VOLTAGE)):
-              (LinearSystemModule.configureRotationController(new WPI_TalonFX(
+              (LinearSystemModule.configureController(new WPI_TalonFX(
                       Values.AZIMUTH_ID),
                       AZIMUTH_SENSOR,
                       Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
                       Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final  RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (() -> {
-                assert LINEAR_CONTROLLER instanceof CANSparkMax;
-                return new SwerveModuleState(
-                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
-                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
-                );
-              }):
+              (() -> new SwerveModuleState(
+                      LINEAR_ENCODER.getVelocity(),
+                      new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+              )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
-              });          
+              });
               public static final LinearSystemModule MODULE = new LinearSystemModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
@@ -287,7 +287,7 @@ public final class Constants {
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureTranslationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
                       Values.LINEAR_MOTOR_TYPE),
                       Values.LINEAR_AMP_LIMIT,
@@ -295,31 +295,30 @@ public final class Constants {
               (LinearSystemModule.configureTranslationController(new WPI_TalonFX(
                       Values.LINEAR_ID),
                       Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureRotationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.AZIMUTH_ID,
                       Values.AZIMUTH_MOTOR_TYPE),
                       Values.AZIMUTH_AMP_LIMIT,
                       Values.AZIMUTH_NOMINAL_VOLTAGE)):
-              (LinearSystemModule.configureRotationController(new WPI_TalonFX(
+              (LinearSystemModule.configureController(new WPI_TalonFX(
                       Values.AZIMUTH_ID),
                       AZIMUTH_SENSOR,
                       Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
                       Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final  RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (() -> {
-                assert LINEAR_CONTROLLER instanceof CANSparkMax;
-                return new SwerveModuleState(
-                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
-                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
-                );
-              }):
+              (() -> new SwerveModuleState(
+                      LINEAR_ENCODER.getVelocity(),
+                      new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+              )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
-              });            
+              });
               public static final LinearSystemModule MODULE = new LinearSystemModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       
@@ -376,7 +375,7 @@ public final class Constants {
           public static final class Components {
             public static final WPI_CANCoder AZIMUTH_SENSOR = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.SENSOR_ID)), Values.AZIMUTH_ENCODER_POSITION_OFFSET);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureTranslationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
                       Values.LINEAR_MOTOR_TYPE),
                       Values.LINEAR_AMP_LIMIT,
@@ -384,31 +383,30 @@ public final class Constants {
               (LinearSystemModule.configureTranslationController(new WPI_TalonFX(
                       Values.LINEAR_ID),
                       Constants.Values.ComponentData.DRIVE_CURRENT_LIMIT));
+            public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (LinearSystemModule.configureRotationController(new CANSparkMax(
+              (LinearSystemModule.configureController(new CANSparkMax(
                       Values.AZIMUTH_ID,
                       Values.AZIMUTH_MOTOR_TYPE),
                       Values.AZIMUTH_AMP_LIMIT,
                       Values.AZIMUTH_NOMINAL_VOLTAGE)):
-              (LinearSystemModule.configureRotationController(new WPI_TalonFX(
+              (LinearSystemModule.configureController(new WPI_TalonFX(
                       Values.AZIMUTH_ID),
                       AZIMUTH_SENSOR,
                       Constants.Values.ComponentData.AZIMUTH_CURRENT_LIMIT,
                       Constants.Values.ComponentData.AZIMUTH_DEADBAND));
+            public static final  RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR),(true))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
-              (() -> {
-                assert LINEAR_CONTROLLER instanceof CANSparkMax;
-                return new SwerveModuleState(
-                        (((CANSparkMax) LINEAR_CONTROLLER).getEncoder().getVelocity()),
-                        new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
-                );
-              }):
+              (() -> new SwerveModuleState(
+                      LINEAR_ENCODER.getVelocity(),
+                      new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition())
+              )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(AZIMUTH_SENSOR.getAbsolutePosition()));
-              });             
+              });       
               public static final LinearSystemModule MODULE = new LinearSystemModule(new MotorControllerGroup(LINEAR_CONTROLLER), new MotorControllerGroup(AZIMUTH_CONTROLLER), STATE_SENSOR, Values.MAXIMUM_LINEAR_VELOCITY, Control.CONSTRAINTS, Control.CONTROL_LOOP);
           }
       

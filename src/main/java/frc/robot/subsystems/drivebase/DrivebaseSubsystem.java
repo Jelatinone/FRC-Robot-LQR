@@ -62,14 +62,14 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         Hardware.Modules.RR_Module.Components.MODULE);
 
     private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
-        new Translation2d( (Values.Chassis.ROBOT_WIDTH) / (2),
-                           (Values.Chassis.ROBOT_WIDTH) / (2)),
-        new Translation2d( (Values.Chassis.ROBOT_WIDTH) / (2),
-                          -(Values.Chassis.ROBOT_WIDTH) / (2)),
-        new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2),
-                           (Values.Chassis.ROBOT_WIDTH) / (2)),
-        new Translation2d(-(Values.Chassis.ROBOT_WIDTH) / (2),
-                          -(Values.Chassis.ROBOT_WIDTH) / (2)));
+        new Translation2d( (Values.Chassis.DRIVETRAIN_WIDTH) / (2),
+                           (Values.Chassis.DRIVETRAIN_WIDTH) / (2)),
+        new Translation2d( (Values.Chassis.DRIVETRAIN_WIDTH) / (2),
+                          -(Values.Chassis.DRIVETRAIN_WIDTH) / (2)),
+        new Translation2d(-(Values.Chassis.DRIVETRAIN_WIDTH) / (2),
+                           (Values.Chassis.DRIVETRAIN_WIDTH) / (2)),
+        new Translation2d(-(Values.Chassis.DRIVETRAIN_WIDTH) / (2),
+                          -(Values.Chassis.DRIVETRAIN_WIDTH) / (2)));
 
     private static final SwerveDrivePoseEstimator POSE_ESTIMATOR = new SwerveDrivePoseEstimator(
         KINEMATICS,
@@ -128,6 +128,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
     }
 
+    /**
+     * Periodically updates the robot's estimated position, and Update the module and drivebase telemetry for all modules within the system.
+     */
     @Override
     public void simulationPeriodic() {
         double IntervalTime;
@@ -169,7 +172,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
     /**
      * Ceases all drivebase motion immediately, can be called again immediately with {@link #set(List, Supplier)}
      */
-    @SuppressWarnings("unused")
     public static synchronized void stop() {
         MODULES.forEach(LinearSystemModule::stop);    
     }
@@ -222,7 +224,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)) * 1e-4) * 4);
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
         SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
-        Demand = List.of(DemandArray);  
         MODULES.forEach((Module) ->  {
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
@@ -234,7 +235,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      *
      * @param Demand Module state demands
      */
-    @SuppressWarnings("unused")
     public static synchronized void set(final List<SwerveModuleState> Demand) {
         set(Demand, () -> false);
     }
@@ -242,7 +242,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
     /**
      * Set module's into a default, "x-locking" position that prevents drivebase movement when idle
      */
-    @SuppressWarnings("unused")
     public static synchronized void set() {
         set(List.of(
         new SwerveModuleState((0.0), new Rotation2d(Units.degreesToRadians((315)))),
@@ -257,7 +256,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      *
      * @param isFieldOriented Whether field oriented control is enabled
      */
-    @SuppressWarnings("unused")
     public static void setFieldOriented(final Boolean isFieldOriented) {
         FieldOriented = isFieldOriented;
     }
@@ -265,7 +263,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
     /**
      * Toggles (switches) the current state of Field Orientation
      */
-    @SuppressWarnings("unused")
     public static void toggleFieldOriented() {
         FieldOriented = !FieldOriented;
     }
@@ -275,7 +272,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * 
      * @param isLockingEnabled Whether Locking is enabled
      */
-    @SuppressWarnings("unused")
     public static void setLockingEnabled(final Boolean isLockingEnabled) {
         LockingEnabled = isLockingEnabled;
     }
@@ -296,7 +292,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @param IsBlue   Whether the robot is on the blue alliance or not, flips the side of the robot
      * @return Autonomous trajectory following command
      */
-    @SuppressWarnings("unused")
     public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory Demand, final HashMap<String, Command> EventMap, final Boolean IsBlue) {
         MODULES.forEach(LinearSystemModule::reset);
         return new SwerveAutoBuilder(INSTANCE, INSTANCE::reset, KINEMATICS, new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD), new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), INSTANCE, (EventMap), (IsBlue), (INSTANCE)).fullAuto(Demand);
@@ -316,7 +311,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      *
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
-    @SuppressWarnings("unused")
     public static SwerveModuleState[] getMeasuredModuleStates() {
         return MODULES.stream().map(LinearSystemModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
     }
@@ -336,10 +330,8 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getOutputModuleStates() {
-        return MODULES.parallelStream().map((Module) -> {
-            return new SwerveModuleState(Module.getTranslationalOutput() * Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
-                Module.getDemandPosition());
-        }).toArray(SwerveModuleState[]::new);
+        return MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
+            Module.getDemandPosition())).toArray(SwerveModuleState[]::new);
     }
 
     /**
