@@ -241,6 +241,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         TRANSLATION_CONTROLLER.setVoltage((0.0));
         ROTATION_CONTROLLER.setVoltage((0.0));
         TargetStateCommand.cancel(); 
+        post();
         if(IS_SIMULATED) {
             var MeasuredState = STATE_SENSOR.get();            
             OUTPUT_VELOCITY_AZIMUTH.set((0));
