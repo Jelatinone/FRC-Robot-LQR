@@ -3,29 +3,28 @@ package frc.robot;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
+import frc.robot.subsystems.drivebase.DrivebaseSubsystem;
+import frc.lib.pilot.PilotProfile;
+
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 import java.util.List;
 
 import org.littletonrobotics.junction.Logger;
-
-import frc.lib.pilot.PilotProfile;
-import frc.robot.subsystems.drivebase.DrivebaseSubsystem;
-
 // ------------------------------------------------------------[Constants Class]------------------------------------------------------------//
 public final class Constants {
     
     public static final class Subsystems {
 
         public static final DrivebaseSubsystem DRIVEBASE_SUBSYSTEM = DrivebaseSubsystem.getInstance();
-
         public static final List<SubsystemBase> SUBSYSTEMS = List.of(DRIVEBASE_SUBSYSTEM);
     }
     
     public static final class AdvantageKit {
+        public static final Boolean IS_REAL_ROBOT = RobotBase.isReal();     
         public static final Boolean REPLAY_FROM_LOG = (false);
         public static final Boolean LOGGING_ENABLED = (false);
-        public static final Boolean ROBOT_IS_REAL = RobotBase.isReal();
+
     }
 
 
@@ -64,7 +63,7 @@ public final class Constants {
 
     }
 
-    public static final Integer POWER_DISTRIBUTION_ID = (0);
+    public static final Integer POWER_DISTRIBUTION_ID = (2);
 
     public static final Logger LOGGER = Logger.getInstance();
 

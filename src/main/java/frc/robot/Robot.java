@@ -8,7 +8,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.Threads;
 import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -18,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.net.PortForwarder;
 import java.util.function.BiConsumer;
+import edu.wpi.first.wpilibj.Threads;
 import java.util.stream.Stream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ public final class Robot extends LoggedRobot  {
   @Override
   public void robotInit() {
     LOGGER.recordMetadata(("ProjectName"), ("PROJECT-LIQUORICE"));
-    if (ROBOT_IS_REAL) {
+    if (IS_REAL_ROBOT) {
       if(LOGGING_ENABLED) {
         LOGGER.addDataReceiver(new WPILOGWriter(("/media/sda1/")));
       }
@@ -58,7 +58,7 @@ public final class Robot extends LoggedRobot  {
         String logPath = LogFileUtil.findReplayLog();
         LOGGER.setReplaySource(new WPILOGReader(logPath));
         if(LOGGING_ENABLED) {
-          LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+          LOGGER.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, ("_sim"))));
         }
       } else {
         if(LOGGING_ENABLED) {
@@ -73,7 +73,7 @@ public final class Robot extends LoggedRobot  {
     int Count = CommandInstanceCount.getOrDefault(OperationName, (0)) + ((Active)? (1): (-1));
     CommandInstanceCount.put(OperationName,Count);
     LOGGER.recordOutput("UniqueOperations/" + OperationName + "_" + Integer.toHexString(Operation.hashCode()), Active);
-    LOGGER.recordOutput("Operations/" + OperationName, Count > 0);
+    LOGGER.recordOutput("Operations/" + OperationName, Count > (0));
     });
     CommandScheduler.getInstance().onCommandInitialize((Command Command) -> CommandFunctionLogger.accept(Command, (true)));
     CommandScheduler.getInstance().onCommandInterrupt((Command Command) -> CommandFunctionLogger.accept(Command, (false)));

@@ -12,8 +12,8 @@ public final class UtilitiesTest {
    */
   @Test
   void CheckErrorCTRE() {
-    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.GeneralError));
-    assertThrows(RuntimeException.class, () -> CheckCTRECode(ErrorCode.FirmVersionCouldNotBeRetrieved));
+    assertThrows((RuntimeException.class), () -> CheckCTRECode(ErrorCode.GeneralError));
+    assertThrows((RuntimeException.class), () -> CheckCTRECode(ErrorCode.FirmVersionCouldNotBeRetrieved));
     assertDoesNotThrow(() -> CheckCTRECode(ErrorCode.OK));
   }
 
@@ -29,8 +29,8 @@ public final class UtilitiesTest {
    */
   @Test
   void CheckErrorREV() {
-    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kError));
-    assertThrows(RuntimeException.class, () -> CheckREVLibCode(REVLibError.kCantFindFirmware));
+    assertThrows((RuntimeException.class), () -> CheckREVLibCode(REVLibError.kError));
+    assertThrows((RuntimeException.class), () -> CheckREVLibCode(REVLibError.kCantFindFirmware));
     assertDoesNotThrow(() -> CheckREVLibCode(REVLibError.kOk));
   }
 

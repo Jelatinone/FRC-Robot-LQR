@@ -1,12 +1,11 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.lib;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.interpolation.Interpolatable;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 
 import java.util.Optional;
-
 // ----------------------------------------------------------[Motion State Class]-----------------------------------------------------------//
 /**
  * 

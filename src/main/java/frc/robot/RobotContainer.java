@@ -1,21 +1,19 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
 package frc.robot;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drivebase.DrivebaseSubsystem;
-import frc.lib.pilot.PilotProfile;
-import frc.robot.Constants.Profiles;
 import frc.robot.Constants.Profiles.KeybindingNames;
 import frc.robot.Constants.Profiles.PreferenceNames;
+import frc.robot.Constants.Profiles;
+import frc.lib.pilot.PilotProfile;
 
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 // ----------------------------------------------------------[Robot Container Class]--------------------------------------------------------//
 public final class RobotContainer {
-  // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
+  // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
   public static RobotContainer INSTANCE = (null);
   public static PilotProfile DRIVEBASE_PILOT = Profiles.Cody.PROFILE;
-  // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
-
   // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
   private RobotContainer() {
     Constants.Profiles.PILOT_PROFILES.forEach((Profile) -> {

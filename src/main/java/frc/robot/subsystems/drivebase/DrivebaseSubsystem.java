@@ -16,11 +16,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Pose2d;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Consumer;
@@ -31,7 +30,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import frc.lib.motion.control.LinearSystemModule;
-import frc.robot.subsystems.drivebase.Constants.Values.Limit;
+import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
@@ -53,8 +52,6 @@ import static frc.robot.Constants.LOGGER;
  */
 public final class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static DrivebaseSubsystem INSTANCE = (null);
-
     private static final List<LinearSystemModule> MODULES = List.of(
         Hardware.Modules.FL_Module.Components.MODULE,
         Hardware.Modules.FR_Module.Components.MODULE,
@@ -79,15 +76,19 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
 
     private static final Field2d FIELD = new Field2d();
 
-    private static final RepeatCommand LOGGING_COMMAND = new RepeatCommand(new InstantCommand(() -> {
+    private static final InstantCommand LOGGING_COMMAND = new InstantCommand(() -> {
         var FieldPose = FIELD.getRobotPose();
         SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
         SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
         SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
-        LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);
-        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());
-    }));
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
+        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());    
+        LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);            
+    });
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
+    private static DrivebaseSubsystem INSTANCE = (null);    
     private static Boolean LockingEnabled = (false);    
     private static Boolean FieldOriented = (false);
     private static Double TimeInterval = (0.0);
@@ -96,12 +97,14 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * Constructor.
      */
     private DrivebaseSubsystem() {
-        PathPlannerServer.startServer(Values.Port.PATHPLANNER_SERVER_PORT);
+        PathPlannerServer.startServer(Values.Ports.PATHPLANNER_SERVER_PORT);
         addChild(("FL-Module[0]"),Hardware.Modules.FL_Module.Components.MODULE);
         addChild(("FR-Module[1]"),Hardware.Modules.FR_Module.Components.MODULE);
         addChild(("RL-Module[2]"),Hardware.Modules.RL_Module.Components.MODULE);
         addChild(("RR-Module[3]"),Hardware.Modules.RR_Module.Components.MODULE);
-        LOGGING_COMMAND.schedule();
+        LOGGER.recordOutput(("Drivebase/Orientation (rightX) Input"), (0.0));        
+        LOGGER.recordOutput(("Drivebase/Translation (leftX) Input"), (0.0));
+        LOGGER.recordOutput(("Drivebase/Translation (leftY) Input"), (0.0));        
     }
     // ---------------------------------------------------------------[Methods]---------------------------------------------------------------//
 
@@ -119,13 +122,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
-        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
+        LOGGING_COMMAND.schedule();
     }
 
     /**
@@ -142,13 +141,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
             IntervalTime = (0.02);
         }
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
-        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
+        LOGGING_COMMAND.schedule();
     }
 
     /**
@@ -192,7 +187,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @param Orientation   The desired rotation of the front face
      * @param ControlType   Whether to use OpenLoop control
      */
-    public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, Supplier<Boolean> ControlType) {
+    public static synchronized void set(final Double Translation_X, final Double Translation_Y, final Double Orientation, final Supplier<Boolean> ControlType) {
         LOGGER.recordOutput(("Drivebase/Translation (leftX) Input"), Translation_X);
         LOGGER.recordOutput(("Drivebase/Translation (leftY) Input"), Translation_Y);
         LOGGER.recordOutput(("Drivebase/Orientation (rightX) Input"), Orientation);
@@ -221,9 +216,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
         var DemandIterator = Demand.iterator();
         Demand.forEach((State) -> 
-            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.ENCODER_SENSITIVITY / (600)) * 1e-4) * 4);
+            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 4);
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
-        SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
+        SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
         MODULES.forEach((Module) ->  {
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
@@ -330,7 +325,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getOutputModuleStates() {
-        return MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Limit.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
+        return MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
             Module.getDemandPosition())).toArray(SwerveModuleState[]::new);
     }
 
