@@ -107,6 +107,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
             OUTPUT_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (0.0));
             MEASURED_VELOCITY_LINEAR  = SIMULATED_MODULE.createDouble(("MEASURED-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (StateSensor.get().speedMetersPerSecond));
         }
+        stop();        
         post();
     }
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
