@@ -2,7 +2,9 @@
 package frc.lib.motion.control;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
+import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
+import com.ctre.phoenix.sensors.SensorTimeBase;
 import com.ctre.phoenix.motorcontrol.TalonFXInvertType;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -18,12 +20,12 @@ import edu.wpi.first.wpilibj.motorcontrol.MotorController;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.wpilibj2.command.RepeatCommand;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.util.sendable.*;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.numbers.*;
@@ -54,27 +56,31 @@ import frc.lib.MotionState;
  */
 public final class LinearSystemModule implements DrivebaseModule  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static final Boolean IS_SIMULATED = RobotBase.isSimulation();
     private static final Logger LOGGER = Logger.getInstance();    
     private final TrapezoidProfile.Constraints ROTATIONAL_MOTION_CONSTRAINTS;
     private final LinearSystemLoop<N2, N1, N1> MOTION_CONTROL_LOOP;
-    private final Double TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY;        
+    private final Supplier<SwerveModuleState> STATE_SENSOR;    
     private final MotorController TRANSLATION_CONTROLLER;
     private final MotorController ROTATION_CONTROLLER;
-    private final Supplier<SwerveModuleState> STATE_SENSOR;
+    private final Double TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY;          
     private final Integer REFERENCE_NUMBER;   
+    private final Boolean IS_SIMULATED;   
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private TrapezoidProfile.State TargetPositionStateReference = new TrapezoidProfile.State();
     private RepeatCommand TargetStateCommand = new RepeatCommand(new InstantCommand());
-    private SwerveModuleState DemandState = new SwerveModuleState();    
+    private SwerveModuleState DemandState = new SwerveModuleState();
+    private FlywheelSim TRANSLATIONAL_CONTROLLER_WHEEL = (null);
+    private FlywheelSim ROTATIONAL_CONTROLLER_WHEEL = (null);        
     private SimDouble MEASURED_POSITION_AZIMUTH = (null);    
     private SimDouble MEASURED_VELOCITY_LINEAR = (null);    
-    private SimDouble DEMAND_POSITION_AZIMUTH = (null);    
-    private SimDouble DEMAND_VELOCITY_LINEAR = (null);    
+    private SimDouble DEMAND_POSITION_AZIMUTH = (null);   
     private SimDouble OUTPUT_VELOCITY_AZIMUTH = (null);
+    private SimDouble DEMAND_VELOCITY_LINEAR = (null);    
     private SimDouble OUTPUT_VELOCITY_LINEAR = (null);    
     private SimDevice SIMULATED_MODULE = (null);
-    private Double TimeReference = (0.0);
+    private Double RotationalFlywheelPosition = (0.0);    
+    private Double TimeReferencePosition = (0.0);
+    private Double TimeReferenceVelocity = (0.0);
     private static Integer INSTANCE_COUNT = (0);    
     // ------------------------------------------------------------[Constructors]-------------------------------------------------------------//
 
@@ -88,7 +94,8 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @param RotationMotionConstraints  The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
      * @param MotionControlLoop          The control loop responsible for controller azimuth output
      */
-    public LinearSystemModule(final MotorController TranslationController, final MotorController RotationController, final Supplier<SwerveModuleState> StateSensor, final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
+    public LinearSystemModule(final MotorController TranslationController, final MotorController RotationController, final Supplier<SwerveModuleState> StateSensor,
+                              final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, final LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
         TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY = MaximumTranslationVelocity;
         ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
         TRANSLATION_CONTROLLER = TranslationController;
@@ -98,18 +105,44 @@ public final class LinearSystemModule implements DrivebaseModule  {
         REFERENCE_NUMBER = INSTANCE_COUNT;
         INSTANCE_COUNT++;
         SendableRegistry.addLW((this), ("LQR-Module"), REFERENCE_NUMBER);
-        if(IS_SIMULATED) {
-            SIMULATED_MODULE = SimDevice.create(("LQR-Module"), REFERENCE_NUMBER);
-            DEMAND_POSITION_AZIMUTH = SIMULATED_MODULE.createDouble(("DEMAND-POSITION-AZIMUTH"),SimDevice.Direction.kOutput, (DemandState.angle.getDegrees()));
-            OUTPUT_VELOCITY_AZIMUTH = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-AZIMUTH"), SimDevice.Direction.kOutput, (0.0));
-            MEASURED_POSITION_AZIMUTH =  SIMULATED_MODULE.createDouble(("MEASURED-POSITION-AZIMUTH"), SimDevice.Direction.kOutput, (STATE_SENSOR.get().angle.getDegrees()));
-            DEMAND_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("DEMAND-VELOCITY-LINEAR"), SimDevice.Direction.kOutput,(DemandState.speedMetersPerSecond));
-            OUTPUT_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (0.0));
-            MEASURED_VELOCITY_LINEAR  = SIMULATED_MODULE.createDouble(("MEASURED-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (StateSensor.get().speedMetersPerSecond));
-        }
-        stop();        
-        post();
+        IS_SIMULATED = (false);   
+        stop();
     }
+
+    /**
+     * Constructor.
+     *
+     * @param TranslationFlywheel        The flywheel(s) responsible for controlling linear translation (velocity); queried with {@link #setVelocity(Supplier, Supplier)}
+     * @param RotationFlywheel           The flywheel(s) responsible for controlling azimuth rotation (position); queried with {@link #setPosition(Supplier)}
+     * @param StateSensor                The sum all collected sensor(s) data into a single {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState} supplier
+     * @param MaximumTranslationVelocity The constraints placed on the Translation Controller which determine maximum velocity output
+     * @param RotationMotionConstraints  The constraint placed on the RotationController which determine maximum velocity output, and maximum change in velocity in an instant time
+     * @param MotionControlLoop          The control loop responsible for controller azimuth output
+     */
+    public LinearSystemModule(final FlywheelSim TranslationFlywheel, final FlywheelSim RotationFlywheel, final Supplier<SwerveModuleState> StateSensor,
+                              final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, final LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
+        TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY = MaximumTranslationVelocity;
+        ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
+        TRANSLATION_CONTROLLER = (null);
+        ROTATION_CONTROLLER = (null);
+        MOTION_CONTROL_LOOP = MotionControlLoop;
+        STATE_SENSOR = StateSensor;
+        REFERENCE_NUMBER = INSTANCE_COUNT;
+        TRANSLATIONAL_CONTROLLER_WHEEL = TranslationFlywheel;
+        ROTATIONAL_CONTROLLER_WHEEL = RotationFlywheel;
+        INSTANCE_COUNT++;
+        IS_SIMULATED = (true);
+        SendableRegistry.addLW((this), ("LQR-Module"), REFERENCE_NUMBER);
+        SIMULATED_MODULE = SimDevice.create(("LQR-Module"), REFERENCE_NUMBER);
+        DEMAND_POSITION_AZIMUTH = SIMULATED_MODULE.createDouble(("DEMAND-POSITION-AZIMUTH"),SimDevice.Direction.kOutput, (DemandState.angle.getDegrees()));
+        OUTPUT_VELOCITY_AZIMUTH = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-AZIMUTH"), SimDevice.Direction.kOutput, (0.0));
+        MEASURED_POSITION_AZIMUTH =  SIMULATED_MODULE.createDouble(("MEASURED-POSITION-AZIMUTH"), SimDevice.Direction.kOutput, (STATE_SENSOR.get().angle.getDegrees()));
+        DEMAND_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("DEMAND-VELOCITY-LINEAR"), SimDevice.Direction.kOutput,(DemandState.speedMetersPerSecond));
+        OUTPUT_VELOCITY_LINEAR = SIMULATED_MODULE.createDouble(("OUTPUT-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (0.0));
+        MEASURED_VELOCITY_LINEAR  = SIMULATED_MODULE.createDouble(("MEASURED-VELOCITY-LINEAR"), SimDevice.Direction.kOutput, (StateSensor.get().speedMetersPerSecond));
+        stop();
+    }
+
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
 
     /**
@@ -122,17 +155,34 @@ public final class LinearSystemModule implements DrivebaseModule  {
     public synchronized void setVelocity(final Supplier<Double> Demand, final Supplier<Boolean> ControlType) {
         var TranslationDemand = Demand.get();
         TranslationDemand = (Objects.isNull(TranslationDemand)) ? (0.0): (TranslationDemand);
+        double DiscretizationTimestep;                                                                                                                   
+        if (TimeReferenceVelocity != (0)) {                                                                                                                                   
+            var MeasuredTime = Timer.getFPGATimestamp();                                                                                                                         
+            DiscretizationTimestep = MeasuredTime - TimeReferenceVelocity;                                                                                                              
+            TimeReferenceVelocity = MeasuredTime;                                                                                                                                        
+        } else {                                                                                                                                                                 
+            DiscretizationTimestep = (0.02);                                                                                                                                     
+        }   
         if (!Double.isNaN(TranslationDemand) && Math.abs(TranslationDemand - getTranslationalOutput()) > (2e-2)) {
+            DEMAND_VELOCITY_LINEAR.set(TranslationDemand);
             if (ControlType.get()) {
-                TRANSLATION_CONTROLLER.setVoltage((TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY)) * RobotController.getBatteryVoltage());
+                var TranslationalControllerOutput = (TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
+                var TranslationalControllerVoltage = TranslationalControllerOutput * RobotController.getBatteryVoltage();
                 if(IS_SIMULATED) {
-                    OUTPUT_VELOCITY_LINEAR.set(TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
+                    TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
+                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage);
+                    OUTPUT_VELOCITY_LINEAR.set(getTranslationalOutput());
+                } else {
+                    TRANSLATION_CONTROLLER.setVoltage(TranslationalControllerVoltage);                    
                 }
             } else {
-                TRANSLATION_CONTROLLER.setVoltage(TranslationDemand * RobotController.getBatteryVoltage());
+                var TranslationalControllerVoltage = (TranslationDemand * RobotController.getBatteryVoltage());
                 if(IS_SIMULATED) {
-                    DEMAND_VELOCITY_LINEAR.set(TranslationDemand);
-                    OUTPUT_VELOCITY_LINEAR.set(TranslationDemand);
+                    TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
+                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage);
+                    OUTPUT_VELOCITY_LINEAR.set(getTranslationalOutput());
+                } else {
+                    TRANSLATION_CONTROLLER.setVoltage(TranslationalControllerVoltage);                    
                 }
 
             }
@@ -144,27 +194,32 @@ public final class LinearSystemModule implements DrivebaseModule  {
      *
      * @param Demand The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      */
-    @Override
+    @Override                                                                                                                                                                        //TODO: Read Control Documentation
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
-        Rotation2d RotationDemand = Demand.get();    
-        if (RotationDemand != null & !Double.isNaN(Objects.requireNonNull(RotationDemand).getRadians())) {
-            double DiscretizationTimestep;
-            if (TimeReference != (0)) {
-                var MeasuredTime = Timer.getFPGATimestamp();
-                DiscretizationTimestep = MeasuredTime - TimeReference;
-                TimeReference = MeasuredTime;
-            } else {
-                DiscretizationTimestep = (0.02);
-            }
-            TrapezoidProfile.State TargetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0));
-            TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, TargetPositionState, TargetPositionStateReference).calculate(DiscretizationTimestep);
-            MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position, TargetPositionStateReference.velocity);
-            MOTION_CONTROL_LOOP.correct(VecBuilder.fill(STATE_SENSOR.get().angle.getRadians()));
-            MOTION_CONTROL_LOOP.predict(DiscretizationTimestep);
-            ROTATION_CONTROLLER.setVoltage(MOTION_CONTROL_LOOP.getU((0)));
+        var RotationDemand = Demand.get();                                                                                                                                           // Obtain the actual rotation from the supplier, this is a supplier for parity with #setVelocity(Supplier,Supplier)
+        if (RotationDemand != null & !Double.isNaN(Objects.requireNonNull(RotationDemand).getRadians())) {                                                                           // Check for null or non-existent values, discard
+            double DiscretizationTimestep;                                                                                                                                           // Calculate the discretization Timestep
+            if (TimeReferencePosition != (0)) {                                                                                                                                      // ...
+                var MeasuredTime = Timer.getFPGATimestamp();                                                                                                                         // ...
+                DiscretizationTimestep = MeasuredTime - TimeReferencePosition;                                                                                                       // ...
+                TimeReferencePosition = MeasuredTime;                                                                                                                                // ...
+            } else {                                                                                                                                                                 // ...
+                DiscretizationTimestep = (0.02);                                                                                                                                     // Set discretization timestep to twenty milliseconds by default
+            }                                                                                                                                                                        // ...
+            var TargetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0.0));                                                                                // Construct a target position, with a position of the demand and no velocity.
+            TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, TargetPositionState, TargetPositionStateReference).calculate(DiscretizationTimestep); // Calculate for the acual position and velocity
+            MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position, TargetPositionStateReference.velocity);                                                              // Given our new reference, set the Linear System's reference to be the calculated reference
+            MOTION_CONTROL_LOOP.correct(VecBuilder.fill((IS_SIMULATED)? (RotationalFlywheelPosition): (STATE_SENSOR.get().angle.getRadians())));                                                                                     // Correct the filter's state vector estimate with real encoder data
+            MOTION_CONTROL_LOOP.predict(DiscretizationTimestep);                                                                                                                     // Update our Optimizer (LQR) to generate control voltage to predict the next state without filter
+            var RotationalControllerVoltage = MOTION_CONTROL_LOOP.getU((0));                                                                                                         // Retrieve the calculated voltage in row 0 of the output matrix U                                                                                                 // ...                                                                                 
             if(IS_SIMULATED) {
+                ROTATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
+                ROTATIONAL_CONTROLLER_WHEEL.setInputVoltage(RotationalControllerVoltage);
                 DEMAND_POSITION_AZIMUTH.set(RotationDemand.getDegrees());                
-                OUTPUT_VELOCITY_AZIMUTH.set(ROTATION_CONTROLLER.get());
+                RotationalFlywheelPosition += ROTATIONAL_CONTROLLER_WHEEL.getAngularVelocityRadPerSec() * (DiscretizationTimestep);
+                OUTPUT_VELOCITY_AZIMUTH.set(getRotationalOutput());                
+            } else {
+                ROTATION_CONTROLLER.setVoltage(RotationalControllerVoltage);                      
             }
         }
     }
@@ -199,7 +254,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         TargetStateCommand.cancel();
         TargetStateCommand = new ParallelCommandGroup(
         new InstantCommand(() -> 
-            setPosition(() -> new Rotation2d(OptimizedDemand.get().angle.getRadians()))),
+            setPosition(() -> OptimizedDemand.get().angle)),
         new InstantCommand(() -> 
             setVelocity(() -> OptimizedDemand.get().speedMetersPerSecond, ControlType))
         ).repeatedly();
@@ -214,7 +269,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
     public synchronized void reset() {
         var State = STATE_SENSOR.get();
         var EncoderPositionRadian = State.angle.getRadians();
-        var EncoderPositionRadiansPerSecond = State.angle.getRadians() / (TimeReference - Timer.getFPGATimestamp());
+        var EncoderPositionRadiansPerSecond = State.angle.getRadians() / (TimeReferencePosition - Timer.getFPGATimestamp());
         MOTION_CONTROL_LOOP.reset(VecBuilder.fill(EncoderPositionRadian, EncoderPositionRadiansPerSecond));
         TargetPositionStateReference = new TrapezoidProfile.State(EncoderPositionRadian, EncoderPositionRadiansPerSecond);
 
@@ -238,20 +293,35 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     @Override
     public void stop() {
+        TargetPositionStateReference = new TrapezoidProfile.State((0.0), (0.0));        
         DemandState = new SwerveModuleState((0.0),new Rotation2d((0.0)));
-        TRANSLATION_CONTROLLER.setVoltage((0.0));
-        ROTATION_CONTROLLER.setVoltage((0.0));
         TargetStateCommand.cancel(); 
-        post();
         if(IS_SIMULATED) {
-            var MeasuredState = STATE_SENSOR.get();            
+            double DiscretizationTimestep;                                                                                                                                     
+            if (TimeReferencePosition != (0)) {                                                                                                                                              
+                var MeasuredTime = Timer.getFPGATimestamp();                                                                                                                         
+                DiscretizationTimestep = MeasuredTime - TimeReferencePosition;                                                                                                               
+                TimeReferencePosition = MeasuredTime;                                                                                                                                        
+            } else {                                                                                                                                                                 
+                DiscretizationTimestep = (0.02);                                                                                                                                     
+            }       
+            TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);                     
+            TRANSLATIONAL_CONTROLLER_WHEEL.setState(VecBuilder.fill((0)));
+            ROTATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);           
+            ROTATIONAL_CONTROLLER_WHEEL.setState(VecBuilder.fill((0)));
             OUTPUT_VELOCITY_AZIMUTH.set((0));
             OUTPUT_VELOCITY_LINEAR.set((0));
             DEMAND_POSITION_AZIMUTH.set((0));
             DEMAND_VELOCITY_LINEAR.set((0));
+            RotationalFlywheelPosition = (0.0);
+            var MeasuredState = STATE_SENSOR.get();              
             MEASURED_POSITION_AZIMUTH.set(MeasuredState.angle.getDegrees());
             MEASURED_VELOCITY_LINEAR.set(MeasuredState.speedMetersPerSecond);              
+        } else {
+            TRANSLATION_CONTROLLER.setVoltage((0.0));
+            ROTATION_CONTROLLER.setVoltage((0.0));            
         }
+        post();        
     }
 
     /**
@@ -261,7 +331,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     @Override
     public void accept(final SwerveModuleState Demand) {
-        set(Demand, () -> false);
+        set(Demand, () -> (false));
     }
 
     @Override
@@ -285,15 +355,15 @@ public final class LinearSystemModule implements DrivebaseModule  {
         SmartDashboard.putNumber(Prefix + "Demand Linear Velocity", DemandState.speedMetersPerSecond);
         SmartDashboard.putNumber(Prefix + "Measured Azimuth Rotation", getMeasuredPosition().getDegrees() % (360));
         SmartDashboard.putNumber(Prefix + "Measured Linear Velocity", getMeasuredVelocity());
-        SmartDashboard.putNumber(Prefix + "Output Azimuth Rotation", ROTATION_CONTROLLER.get());
-        SmartDashboard.putNumber(Prefix + "Output Linear Velocity", TRANSLATION_CONTROLLER.get());
+        SmartDashboard.putNumber(Prefix + "Output Azimuth Rotation", getRotationalOutput());
+        SmartDashboard.putNumber(Prefix + "Output Linear Velocity",getTranslationalOutput());
         LOGGER.recordOutput((Prefix + "DemandAzimuthPosition"), DemandState.angle.getDegrees());
         LOGGER.recordOutput((Prefix + "DemandAzimuthPositionVelocity"), TargetPositionStateReference.velocity);
         LOGGER.recordOutput((Prefix + "DemandTranslationVelocity"), DemandState.speedMetersPerSecond);
-        LOGGER.recordOutput((Prefix + "MeasuredAzimuthRotation"), getMeasuredPosition().getDegrees());
+        LOGGER.recordOutput((Prefix + "MeasuredAzimuthRotation"), getMeasuredPosition().getDegrees() % (360));
         LOGGER.recordOutput((Prefix + "MeasuredTranslationVelocity"), getMeasuredVelocity());
-        LOGGER.recordOutput((Prefix + "OutputAzimuthPercent"), ROTATION_CONTROLLER.get());
-        LOGGER.recordOutput((Prefix + "OutputTranslationPercent"), TRANSLATION_CONTROLLER.get());
+        LOGGER.recordOutput((Prefix + "OutputAzimuthPercent"), getRotationalOutput());
+        LOGGER.recordOutput((Prefix + "OutputTranslationPercent"), getTranslationalOutput());
         if(IS_SIMULATED) {
             MEASURED_VELOCITY_LINEAR.set(STATE_SENSOR.get().speedMetersPerSecond);
             MEASURED_POSITION_AZIMUTH.set(STATE_SENSOR.get().angle.getDegrees());            
@@ -353,10 +423,12 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     public static WPI_CANCoder configureRotationEncoder(final WPI_CANCoder AzimuthEncoder, final Double Offset, final Boolean Inverted) {
         AzimuthEncoder.configFactoryDefault();
+        AzimuthEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+        AzimuthEncoder.configGetFeedbackTimeBase(SensorTimeBase.PerSecond.value);        
         AzimuthEncoder.configMagnetOffset(Offset);
         AzimuthEncoder.configSensorDirection(Inverted);
         AzimuthEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
-        AzimuthEncoder.setPositionToAbsolute();
+        AzimuthEncoder.setPositionToAbsolute();        
         return AzimuthEncoder;
     }
 
@@ -457,23 +529,23 @@ public final class LinearSystemModule implements DrivebaseModule  {
     }
 
     /**
-     * Get the current percent output [-1,1] of the position(Rotation of Rotational controller)
+     * Get the current angular velocity in RPM of the rotational controller or flywheel
      * 
-     * @return A quantitative representation of the module's rotation percent output
+     * @return A quantitative representation of the module's rotation 
      */
     @Override
     public Double getRotationalOutput() {
-        return ROTATION_CONTROLLER.get();
+        return IS_SIMULATED? (RotationalFlywheelPosition): (ROTATION_CONTROLLER.get());
     }
 
     /**
-     * Get the current percent output [-1,1] of the translation(Velocity of Translation controller)
+     * Get the current angular velocity in rotations of the translational controller or flywheel
      * 
-     * @return A quantitative representation of the module's translation percent output
+     * @return A quantitative representation of the module's translation
      */
     @Override
     public Double getTranslationalOutput() {
-        return TRANSLATION_CONTROLLER.get();
+        return IS_SIMULATED? (TRANSLATIONAL_CONTROLLER_WHEEL.getAngularVelocityRPM() * (0.02)): (TRANSLATION_CONTROLLER.get());
     }
     
     

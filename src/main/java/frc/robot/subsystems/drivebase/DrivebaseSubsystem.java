@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Timer;
+
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.io.Closeable;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import frc.lib.motion.control.LinearSystemModule;
+import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
@@ -59,7 +61,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         Hardware.Modules.RR_Module.Components.MODULE);
 
     private static final SwerveDriveKinematics KINEMATICS = new SwerveDriveKinematics(
-        new Translation2d( (Values.Chassis.DRIVETRAIN_WIDTH) / (2),
+        new Translation2d( (Values.Chassis.DRIVETRAIN_WIDTH) / (2), 
                            (Values.Chassis.DRIVETRAIN_WIDTH) / (2)),
         new Translation2d( (Values.Chassis.DRIVETRAIN_WIDTH) / (2),
                           -(Values.Chassis.DRIVETRAIN_WIDTH) / (2)),
@@ -83,7 +85,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
         LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
         LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());  
+        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());   
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());    
         LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);            
     });
@@ -168,7 +170,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * Ceases all drivebase motion immediately, can be called again immediately with {@link #set(List, Supplier)}
      */
     public static synchronized void stop() {
-        MODULES.forEach(LinearSystemModule::stop);    
+        MODULES.stream().sequential().forEachOrdered(LinearSystemModule::stop);    
     }
 
     /**
@@ -191,6 +193,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         LOGGER.recordOutput(("Drivebase/Translation (leftX) Input"), Translation_X);
         LOGGER.recordOutput(("Drivebase/Translation (leftY) Input"), Translation_Y);
         LOGGER.recordOutput(("Drivebase/Orientation (rightX) Input"), Orientation);
+        SmartDashboard.putNumber(("Drivebase/Translation (leftX) Input"), Translation_X);
+        SmartDashboard.putNumber(("Drivebase/Translation (leftY) Input"), Translation_Y);
+        SmartDashboard.putNumber(("Drivebase/Orientation (rightX) Input"), Orientation);
         if((Math.abs(Translation_X) <= (2e-2)) && (Math.abs(Translation_Y) <= (2e-2)) && (Math.abs(Orientation) <= (2e-2))) {
             if (LockingEnabled) {
                 set();
@@ -214,12 +219,12 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @param ControlType Whether to use OpenLoop control
      */
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
-        var DemandIterator = Demand.iterator();
-        Demand.forEach((State) -> 
-            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 4);
+        Demand.stream().sequential().forEachOrdered((State) -> 
+            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 8);
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
         SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
-        MODULES.forEach((Module) ->  {
+        var DemandIterator = Demand.iterator();        
+        MODULES.stream().sequential().forEachOrdered((Module) ->  {
             Module.set(DemandIterator.next(), ControlType);
             Module.post();
         });
@@ -288,7 +293,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return Autonomous trajectory following command
      */
     public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory Demand, final HashMap<String, Command> EventMap, final Boolean IsBlue) {
-        MODULES.forEach(LinearSystemModule::reset);
+        MODULES.stream().sequential().forEachOrdered(LinearSystemModule::reset);
         return new SwerveAutoBuilder(INSTANCE, INSTANCE::reset, KINEMATICS, new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD), new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), INSTANCE, (EventMap), (IsBlue), (INSTANCE)).fullAuto(Demand);
     }
 
@@ -325,8 +330,10 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getOutputModuleStates() {
-        return MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
-            Module.getDemandPosition())).toArray(SwerveModuleState[]::new);
+        return (Chassis.IS_SIMULATED)? 
+            (MODULES.parallelStream().map((Module) -> new SwerveModuleState((Module.getTranslationalOutput()), new Rotation2d(Module.getRotationalOutput()))).toArray(SwerveModuleState[]::new)): 
+            (MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
+            new Rotation2d(Module.getRotationalOutput()))).toArray(SwerveModuleState[]::new));
     }
 
     /**
