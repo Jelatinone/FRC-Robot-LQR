@@ -136,7 +136,7 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                (8.16),                           
+                 (505.597120488),                            
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
@@ -165,7 +165,7 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                ((150.0)/7.0),                     
+                (249.71004822),                     
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
@@ -282,13 +282,13 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                (8.16),                            
+                 (505.597120488),                            
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
               (Chassis.DRIVETRAIN_GEAR_RATIO), 
-              (VecBuilder.fill((0.025))))):         
+              (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
@@ -311,7 +311,7 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                ((150.0)/7.0),                  
+                (249.71004822),                     
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
@@ -429,13 +429,13 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                (8.16),                               
+                 (505.597120488),                            
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
               (Chassis.DRIVETRAIN_GEAR_RATIO), 
-              (VecBuilder.fill((0.025))))):      
+              (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
@@ -458,13 +458,13 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                ((150.0)/7.0),                  
+                (249.71004822),                     
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
               (Chassis.DRIVETRAIN_GEAR_RATIO), 
-              (VecBuilder.fill((0.025))))):         
+              (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
@@ -576,13 +576,13 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                (8.16),                             
+                 (505.597120488),                            
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
               (Chassis.DRIVETRAIN_GEAR_RATIO), 
-              (VecBuilder.fill((0.025))))):          
+              (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final MotorController AZIMUTH_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
@@ -605,13 +605,13 @@ public final class Constants {
                 (Chassis.IS_NEO_SWERVE)?
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
-                ((150.0)/7.0),                       
+                (249.71004822),                     
                 (Chassis.DRIVETRAIN_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
               (Chassis.DRIVETRAIN_GEAR_RATIO), 
-              (VecBuilder.fill((0.025))))):           
+              (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?

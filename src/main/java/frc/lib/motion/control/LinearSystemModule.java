@@ -170,7 +170,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
                 var TranslationalControllerVoltage = TranslationalControllerOutput * RobotController.getBatteryVoltage();
                 if(IS_SIMULATED) {
                     TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
-                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage);
+                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage * (100));
                     OUTPUT_VELOCITY_LINEAR.set(getTranslationalOutput());
                 } else {
                     TRANSLATION_CONTROLLER.setVoltage(TranslationalControllerVoltage);                    
@@ -179,7 +179,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
                 var TranslationalControllerVoltage = (TranslationDemand * RobotController.getBatteryVoltage());
                 if(IS_SIMULATED) {
                     TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
-                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage);
+                    TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage * (100));
                     OUTPUT_VELOCITY_LINEAR.set(getTranslationalOutput());
                 } else {
                     TRANSLATION_CONTROLLER.setVoltage(TranslationalControllerVoltage);                    
@@ -214,7 +214,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
             var RotationalControllerVoltage = MOTION_CONTROL_LOOP.getU((0));                                                                                                         // Retrieve the calculated voltage in row 0 of the output matrix U                                                                                                 // ...                                                                                 
             if(IS_SIMULATED) {
                 ROTATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
-                ROTATIONAL_CONTROLLER_WHEEL.setInputVoltage(RotationalControllerVoltage);
+                ROTATIONAL_CONTROLLER_WHEEL.setInputVoltage(RotationalControllerVoltage * (100));
                 DEMAND_POSITION_AZIMUTH.set(RotationDemand.getDegrees());                
                 RotationalFlywheelPosition += ROTATIONAL_CONTROLLER_WHEEL.getAngularVelocityRadPerSec() * (DiscretizationTimestep);
                 OUTPUT_VELOCITY_AZIMUTH.set(getRotationalOutput());                
