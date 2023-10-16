@@ -56,6 +56,11 @@ public interface DrivebaseModule extends Sendable, Closeable, Supplier<SwerveMod
   public default void close() {}
 
   /**
+   * Reset the control loop system of the module, sets reference r and output u to zero
+   */
+  public default void reset() {}
+
+  /**
    * Shorthand without suppliers for specifying the desired motion that the module should achieve
    * 
    * @param Demand The desired motion state

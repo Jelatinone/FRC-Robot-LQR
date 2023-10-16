@@ -194,7 +194,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      *
      * @param Demand The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      */
-    @Override                                                                                                                                                                        //TODO: Read Control Documentation
+    @Override                                                                                                                                                                        //TODO: Read Documentation Below
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
         var RotationDemand = Demand.get();                                                                                                                                           // Obtain the actual rotation from the supplier, this is a supplier for parity with #setVelocity(Supplier,Supplier)
         if (RotationDemand != null & !Double.isNaN(Objects.requireNonNull(RotationDemand).getRadians())) {                                                                           // Check for null or non-existent values, discard
@@ -209,18 +209,18 @@ public final class LinearSystemModule implements DrivebaseModule  {
             var TargetPositionState = new TrapezoidProfile.State(RotationDemand.getRadians(), (0.0));                                                                                // Construct a target position, with a position of the demand and no velocity.
             TargetPositionStateReference = new TrapezoidProfile(ROTATIONAL_MOTION_CONSTRAINTS, TargetPositionState, TargetPositionStateReference).calculate(DiscretizationTimestep); // Calculate for the acual position and velocity
             MOTION_CONTROL_LOOP.setNextR(TargetPositionStateReference.position, TargetPositionStateReference.velocity);                                                              // Given our new reference, set the Linear System's reference to be the calculated reference
-            MOTION_CONTROL_LOOP.correct(VecBuilder.fill((IS_SIMULATED)? (RotationalFlywheelPosition): (STATE_SENSOR.get().angle.getRadians())));                                                                                     // Correct the filter's state vector estimate with real encoder data
+            MOTION_CONTROL_LOOP.correct(VecBuilder.fill((IS_SIMULATED)? (RotationalFlywheelPosition): (STATE_SENSOR.get().angle.getRadians())));                                     // Correct the filter's state vector estimate with real encoder data
             MOTION_CONTROL_LOOP.predict(DiscretizationTimestep);                                                                                                                     // Update our Optimizer (LQR) to generate control voltage to predict the next state without filter
-            var RotationalControllerVoltage = MOTION_CONTROL_LOOP.getU((0));                                                                                                         // Retrieve the calculated voltage in row 0 of the output matrix U                                                                                                 // ...                                                                                 
-            if(IS_SIMULATED) {
-                ROTATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
-                ROTATIONAL_CONTROLLER_WHEEL.setInputVoltage(RotationalControllerVoltage * (100));
-                DEMAND_POSITION_AZIMUTH.set(RotationDemand.getDegrees());                
-                RotationalFlywheelPosition += ROTATIONAL_CONTROLLER_WHEEL.getAngularVelocityRadPerSec() * (DiscretizationTimestep);
-                OUTPUT_VELOCITY_AZIMUTH.set(getRotationalOutput());                
-            } else {
-                ROTATION_CONTROLLER.setVoltage(RotationalControllerVoltage);                      
-            }
+            var RotationalControllerVoltage = MOTION_CONTROL_LOOP.getU((0));                                                                                                         // Retrieve the calculated voltage in row 0 of the output matrix U                                                                          
+            if(IS_SIMULATED) {                                                                                                                                                       // ...       
+                ROTATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);                                                                                                          // Update the flywheel with respect to time
+                ROTATIONAL_CONTROLLER_WHEEL.setInputVoltage(RotationalControllerVoltage * (100));                                                                                    // Set flywheel controller input voltage   
+                DEMAND_POSITION_AZIMUTH.set(RotationDemand.getDegrees());                                                                                                            // ...       
+                RotationalFlywheelPosition += ROTATIONAL_CONTROLLER_WHEEL.getAngularVelocityRadPerSec() * (DiscretizationTimestep);                                                  // Integrate flywheel velocity into position
+                OUTPUT_VELOCITY_AZIMUTH.set(getRotationalOutput());                                                                                                                  // ...       
+            } else {                                                                                                                                                                 // ...       
+                ROTATION_CONTROLLER.setVoltage(RotationalControllerVoltage);                                                                                                         // Set motor controller input voltage  
+            }                                                                                                                                                                        // ...       
         }
     }
 

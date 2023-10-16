@@ -16,7 +16,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Pose2d;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -30,9 +29,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import frc.lib.motion.control.LinearSystemModule;
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
+import frc.lib.motion.control.DrivebaseModule;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
@@ -54,7 +53,7 @@ import static frc.robot.Constants.LOGGER;
  */
 public final class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
-    private static final List<LinearSystemModule> MODULES = List.of(
+    private static final List<DrivebaseModule> MODULES = List.of(
         Hardware.Modules.FL_Module.Components.MODULE,
         Hardware.Modules.FR_Module.Components.MODULE,
         Hardware.Modules.RL_Module.Components.MODULE,
@@ -77,18 +76,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new Pose2d());
 
     private static final Field2d FIELD = new Field2d();
-
-    private static final InstantCommand LOGGING_COMMAND = new InstantCommand(() -> {
-        var FieldPose = FIELD.getRobotPose();
-        SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
-        SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
-        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
-        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
-        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
-        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());   
-        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());    
-        LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);            
-    });
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
     private static DrivebaseSubsystem INSTANCE = (null);    
     private static Boolean LockingEnabled = (false);    
@@ -126,7 +113,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGING_COMMAND.schedule();
+        new Thread(DrivebaseSubsystem::post).start();
     }
 
     /**
@@ -145,7 +132,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        LOGGING_COMMAND.schedule();
+        new Thread(DrivebaseSubsystem::post).start();
     }
 
     /**
@@ -170,14 +157,28 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * Ceases all drivebase motion immediately, can be called again immediately with {@link #set(List, Supplier)}
      */
     public static synchronized void stop() {
-        MODULES.stream().sequential().forEachOrdered(LinearSystemModule::stop);    
+        MODULES.stream().sequential().forEachOrdered(DrivebaseModule::stop);    
+    }
+
+    /**
+    * Post all telemtry updates from the current time to the previous call to this method
+    */
+    public static void post() {
+        var FieldPose = FIELD.getRobotPose();
+        SmartDashboard.putNumber(("Drivebase/Translation"),FieldPose.getTranslation().getNorm());
+        SmartDashboard.putNumber(("Drivebase/Rotation"),FieldPose.getRotation().getDegrees());
+        SmartDashboard.putNumber(("Drivebase/Heading"),Hardware.GYROSCOPE.getYaw());
+        LOGGER.recordOutput(("Drivebase/MeasuredStates"), getMeasuredModuleStates());        
+        LOGGER.recordOutput(("Drivebase/DemandStates"), getDemandModuleStates());
+        LOGGER.recordOutput(("Drivebase/OutputStates"), getOutputModuleStates());   
+        LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());    
+        LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);   
     }
 
     /**
      * Closes all resources held within the subsystem, makes subsystem unusable
      */
     public void close() {
-        LOGGING_COMMAND.cancel();
         FIELD.close();
     }
     // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
@@ -293,7 +294,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return Autonomous trajectory following command
      */
     public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory Demand, final HashMap<String, Command> EventMap, final Boolean IsBlue) {
-        MODULES.stream().sequential().forEachOrdered(LinearSystemModule::reset);
+        MODULES.stream().sequential().forEachOrdered(DrivebaseModule::reset);
         return new SwerveAutoBuilder(INSTANCE, INSTANCE::reset, KINEMATICS, new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD), new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), INSTANCE, (EventMap), (IsBlue), (INSTANCE)).fullAuto(Demand);
     }
 
@@ -312,7 +313,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getMeasuredModuleStates() {
-        return MODULES.stream().map(LinearSystemModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**
@@ -321,7 +322,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getDemandModuleStates() {
-        return MODULES.stream().map(LinearSystemModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().map(DrivebaseModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**

@@ -202,10 +202,10 @@ public final class Constants {
                 Control.CONTROL_LOOP));
           }
       
-                                                                                                                                                                                                           //TODO: Read Control Documentation
+                                                                                                                                                                                                           //TODO: Read Documentation Below
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.01);                                                                                                          // Weight of control percision position (Qelms)
-            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (0.01);                                                                                                        // Weight of control percision velocity (Qelms)
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);                                                                                                          // Weight of control percision position (Qelms)
+            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);                                                                                                         // Weight of control percision velocity (Qelms)
             public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                                  // Weight of control effort (Relms)
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);                         // Constraints for maximum velocity and acceleration of azimuth
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                          // Single Input, Single Output State-Space System
@@ -350,9 +350,9 @@ public final class Constants {
       
                                                                                                                                                                                              
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.01);
-            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (0.01);
-            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                           
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
+            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                      
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                  
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(                                                                                                        
@@ -496,9 +496,9 @@ public final class Constants {
           }
       
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.01);
-            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (0.01);
-            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                           
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
+            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                             
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                  
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(                                                                                                        
@@ -643,9 +643,9 @@ public final class Constants {
           }
 
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.01);
-            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (0.01);
-            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                           
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
+            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                                
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                  
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(                                                                                                        
