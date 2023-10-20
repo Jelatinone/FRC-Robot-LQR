@@ -221,7 +221,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      */
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
         Demand.stream().sequential().forEachOrdered((State) -> 
-            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 8);
+            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 8);
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
         SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
         var DemandIterator = Demand.iterator();        
@@ -295,7 +295,17 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      */
     public static synchronized Command getAutonomousCommand(final PathPlannerTrajectory Demand, final HashMap<String, Command> EventMap, final Boolean IsBlue) {
         MODULES.stream().sequential().forEachOrdered(DrivebaseModule::reset);
-        return new SwerveAutoBuilder(INSTANCE, INSTANCE::reset, KINEMATICS, new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD), new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD), INSTANCE, (EventMap), (IsBlue), (INSTANCE)).fullAuto(Demand);
+        return new SwerveAutoBuilder(
+            INSTANCE,
+            INSTANCE::reset,
+            KINEMATICS,
+            new PIDConstants(Constants.Values.PathPlanner.TRANSLATION_KP, Constants.Values.PathPlanner.TRANSLATION_KI, Constants.Values.PathPlanner.TRANSLATION_KD),
+            new PIDConstants(Constants.Values.PathPlanner.ROTATION_KP, Constants.Values.PathPlanner.ROTATION_KI, Constants.Values.PathPlanner.ROTATION_KD),
+            INSTANCE,
+            EventMap,
+            IsBlue,
+            INSTANCE)
+        .fullAuto(Demand);
     }
 
     /**
@@ -304,7 +314,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModulePosition SwerveModulePosition}
      */
     public static SwerveModulePosition[] getModulePositions() {
-        return MODULES.stream().map((Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition())).toArray(SwerveModulePosition[]::new);
+        return MODULES.stream().sequential().map(
+            (Module) -> new SwerveModulePosition(Values.ComponentData.SCALE_FACTOR * (Module.getMeasuredVelocity()) * Values.Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO * Values.Chassis.WHEEL_PERIMETER, Module.getMeasuredPosition()))
+            .toArray(SwerveModulePosition[]::new);
     }
 
     /**
@@ -313,7 +325,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getMeasuredModuleStates() {
-        return MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().sequential().map(DrivebaseModule::getMeasuredModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**
@@ -322,7 +334,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @return An array of {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleStates}
      */
     public static SwerveModuleState[] getDemandModuleStates() {
-        return MODULES.stream().map(DrivebaseModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
+        return MODULES.stream().sequential().map(DrivebaseModule::getDemandModuleState).toArray(SwerveModuleState[]::new);
     }
 
     /**
@@ -332,8 +344,8 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      */
     public static SwerveModuleState[] getOutputModuleStates() {
         return (Chassis.IS_SIMULATED)? 
-            (MODULES.parallelStream().map((Module) -> new SwerveModuleState((Module.getTranslationalOutput()), new Rotation2d(Module.getRotationalOutput()))).toArray(SwerveModuleState[]::new)): 
-            (MODULES.parallelStream().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
+            (MODULES.stream().sequential().map((Module) -> new SwerveModuleState((Module.getTranslationalOutput()), new Rotation2d(Module.getRotationalOutput()))).toArray(SwerveModuleState[]::new)): 
+            (MODULES.stream().sequential().map((Module) -> new SwerveModuleState(Module.getTranslationalOutput() * Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT,
             new Rotation2d(Module.getRotationalOutput()))).toArray(SwerveModuleState[]::new));
     }
 

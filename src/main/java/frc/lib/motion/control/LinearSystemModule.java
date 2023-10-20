@@ -62,7 +62,8 @@ public final class LinearSystemModule implements DrivebaseModule  {
     private final Supplier<SwerveModuleState> STATE_SENSOR;    
     private final MotorController TRANSLATION_CONTROLLER;
     private final MotorController ROTATION_CONTROLLER;
-    private final Double TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY;          
+    private final Double TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY;  
+    private final Double ROTATIONAL_FLYWHEEL_INITIAL_POSITION;        
     private final Integer REFERENCE_NUMBER;   
     private final Boolean IS_SIMULATED;   
     // ---------------------------------------------------------------[Fields]----------------------------------------------------------------//
@@ -101,6 +102,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         TRANSLATION_CONTROLLER = TranslationController;
         ROTATION_CONTROLLER = RotationController;
         MOTION_CONTROL_LOOP = MotionControlLoop;
+        ROTATIONAL_FLYWHEEL_INITIAL_POSITION = (null);
         STATE_SENSOR = StateSensor;
         REFERENCE_NUMBER = INSTANCE_COUNT;
         INSTANCE_COUNT++;
@@ -120,7 +122,8 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @param MotionControlLoop          The control loop responsible for controller azimuth output
      */
     public LinearSystemModule(final FlywheelSim TranslationFlywheel, final FlywheelSim RotationFlywheel, final Supplier<SwerveModuleState> StateSensor,
-                              final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, final LinearSystemLoop<N2, N1, N1> MotionControlLoop) {
+                              final Double MaximumTranslationVelocity, final TrapezoidProfile.Constraints RotationMotionConstraints, final LinearSystemLoop<N2, N1, N1> MotionControlLoop,
+                               final Double RotationInitialPosition) {
         TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY = MaximumTranslationVelocity;
         ROTATIONAL_MOTION_CONSTRAINTS = RotationMotionConstraints;
         TRANSLATION_CONTROLLER = (null);
@@ -130,6 +133,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
         REFERENCE_NUMBER = INSTANCE_COUNT;
         TRANSLATIONAL_CONTROLLER_WHEEL = TranslationFlywheel;
         ROTATIONAL_CONTROLLER_WHEEL = RotationFlywheel;
+        ROTATIONAL_FLYWHEEL_INITIAL_POSITION = RotationInitialPosition;
         INSTANCE_COUNT++;
         IS_SIMULATED = (true);
         SendableRegistry.addLW((this), ("LQR-Module"), REFERENCE_NUMBER);
@@ -164,11 +168,11 @@ public final class LinearSystemModule implements DrivebaseModule  {
             DiscretizationTimestep = (0.02);                                                                                                                                     
         }   
         if (!Double.isNaN(TranslationDemand) && Math.abs(TranslationDemand - getTranslationalOutput()) > (2e-2)) {
-            DEMAND_VELOCITY_LINEAR.set(TranslationDemand);
             if (ControlType.get()) {
                 var TranslationalControllerOutput = (TranslationDemand / (TRANSLATIONAL_MOTION_MAXIMUM_VELOCITY));
                 var TranslationalControllerVoltage = TranslationalControllerOutput * RobotController.getBatteryVoltage();
                 if(IS_SIMULATED) {
+                    DEMAND_VELOCITY_LINEAR.set(TranslationDemand);
                     TRANSLATIONAL_CONTROLLER_WHEEL.update(DiscretizationTimestep);
                     TRANSLATIONAL_CONTROLLER_WHEEL.setInputVoltage(TranslationalControllerVoltage * (100));
                     OUTPUT_VELOCITY_LINEAR.set(getTranslationalOutput());
@@ -313,7 +317,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
             OUTPUT_VELOCITY_LINEAR.set((0));
             DEMAND_POSITION_AZIMUTH.set((0));
             DEMAND_VELOCITY_LINEAR.set((0));
-            RotationalFlywheelPosition = (0.0);
+            RotationalFlywheelPosition = (ROTATIONAL_FLYWHEEL_INITIAL_POSITION);
             var MeasuredState = STATE_SENSOR.get();              
             MEASURED_POSITION_AZIMUTH.set(MeasuredState.angle.getDegrees());
             MEASURED_VELOCITY_LINEAR.set(MeasuredState.speedMetersPerSecond);              

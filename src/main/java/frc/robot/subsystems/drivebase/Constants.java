@@ -28,6 +28,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Nat;
 
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
+import frc.robot.subsystems.drivebase.Constants.Values.ComponentData;
 import frc.lib.motion.control.LinearSystemModule;
 
 import java.util.function.Supplier;
@@ -58,10 +59,11 @@ public final class Constants {
       public static final Double WHEEL_DIAMETER = (0.1016);          
       public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;      
       public static final Boolean IS_SIMULATED = (RobotBase.isSimulation());    
-      public static final Boolean IS_NEO_SWERVE = (false);       
-      public static final Double DRIVETRAIN_GEAR_RATIO = (6.75);
+      public static final Boolean IS_NEO_SWERVE = (true);       
+      public static final Double DRIVETRAIN_LINEAR_GEAR_RATIO = (6.75);
+      public static final Double DRIVETRAIN_AZIMUTH_GEAR_RATIO = (150.0/7.0);
       public static final Double DRIVETRAIN_WIDTH = (IS_NEO_SWERVE)? (Units.inchesToMeters((21.75))): (0.6858);   
-      public static final Double AZIMUTH_ENCODER_POSITION_FACTOR = ((WHEEL_DIAMETER * Math.PI) / DRIVETRAIN_GEAR_RATIO);
+      public static final Double AZIMUTH_ENCODER_POSITION_FACTOR = ((WHEEL_DIAMETER * Math.PI) / DRIVETRAIN_AZIMUTH_GEAR_RATIO);
       public static final Double LINEAR_ENCODER_VELOCITY_FACTOR = (AZIMUTH_ENCODER_POSITION_FACTOR / (60.0));               
     }
 
@@ -137,11 +139,11 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                  (505.597120488),                            
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
@@ -166,23 +168,23 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                 (249.71004822),                     
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (Chassis.IS_SIMULATED)? (LINEAR_FLYWHEEL.getAngularVelocityRPM()): (LINEAR_ENCODER.getVelocity()),
+                      (LINEAR_ENCODER.getVelocity()),
                       new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
-                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
@@ -192,7 +194,8 @@ public final class Constants {
                 STATE_SENSOR,
                 Values.LINEAR_MAXIMUM_VELOCITY,
                 Control.CONSTRAINTS,
-                Control.CONTROL_LOOP)):
+                Control.CONTROL_LOOP, 
+                Units.degreesToRadians(Values.PRIMARY_ENCODER_OFFSET))):
               (new LinearSystemModule(
                 (LINEAR_CONTROLLER),
                 (AZIMUTH_CONTROLLER),
@@ -204,7 +207,7 @@ public final class Constants {
       
                                                                                                                                                                                                            //TODO: Read Documentation Below
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);                                                                                                          // Weight of control percision position (Qelms)
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);                                                                                                          // Weight of control percision position (Qelms)
             public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);                                                                                                         // Weight of control percision velocity (Qelms)
             public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                                  // Weight of control effort (Relms)
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);                         // Constraints for maximum velocity and acceleration of azimuth
@@ -283,11 +286,11 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                  (505.597120488),                            
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
@@ -312,23 +315,23 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                 (249.71004822),                     
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (Chassis.IS_SIMULATED)? (LINEAR_FLYWHEEL.getAngularVelocityRPM()): (LINEAR_ENCODER.getVelocity()),
+                      (LINEAR_ENCODER.getVelocity()),
                       new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
-                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
@@ -338,7 +341,8 @@ public final class Constants {
                 STATE_SENSOR,
                 Values.LINEAR_MAXIMUM_VELOCITY,
                 Control.CONSTRAINTS,
-                Control.CONTROL_LOOP)):
+                Control.CONTROL_LOOP, 
+                Units.degreesToRadians(Values.PRIMARY_ENCODER_OFFSET))):
               (new LinearSystemModule(
                 (LINEAR_CONTROLLER),
                 (AZIMUTH_CONTROLLER),
@@ -350,9 +354,9 @@ public final class Constants {
       
                                                                                                                                                                                              
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);
             public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
-            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                      
+            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                   
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                  
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(                                                                                                        
@@ -430,11 +434,11 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                  (505.597120488),                            
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
@@ -459,23 +463,23 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                 (249.71004822),                     
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (Chassis.IS_SIMULATED)? (LINEAR_FLYWHEEL.getAngularVelocityRPM()): (LINEAR_ENCODER.getVelocity()),
+                     (LINEAR_ENCODER.getVelocity()),
                       new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
-                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
@@ -485,7 +489,8 @@ public final class Constants {
                 STATE_SENSOR,
                 Values.LINEAR_MAXIMUM_VELOCITY,
                 Control.CONSTRAINTS,
-                Control.CONTROL_LOOP)):
+                Control.CONTROL_LOOP, 
+                Units.degreesToRadians(Values.PRIMARY_ENCODER_OFFSET))):
               (new LinearSystemModule(
                 (LINEAR_CONTROLLER),
                 (AZIMUTH_CONTROLLER),
@@ -496,9 +501,9 @@ public final class Constants {
           }
       
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);
             public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
-            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                             
+            public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                            
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                  
             public static final LinearSystemLoop<N2,N1,N1> CONTROL_LOOP = new LinearSystemLoop<>(                                                                                                        
@@ -577,11 +582,11 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                  (505.597120488),                            
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):       
             (null);
             public static final RelativeEncoder LINEAR_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
@@ -606,23 +611,23 @@ public final class Constants {
                   (DCMotor.getNEO((1))):
                   (DCMotor.getFalcon500((1))),
                 (249.71004822),                     
-                (Chassis.DRIVETRAIN_GEAR_RATIO)),
+                (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO)),
               (Chassis.IS_NEO_SWERVE)?
                 (DCMotor.getNEO((1))):
                 (DCMotor.getFalcon500((1))),
-              (Chassis.DRIVETRAIN_GEAR_RATIO), 
+              (Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO), 
               (VecBuilder.fill((0.025))))):          
             (null);
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (Chassis.IS_SIMULATED)? (LINEAR_FLYWHEEL.getAngularVelocityRPM()): (LINEAR_ENCODER.getVelocity()),
+                     (LINEAR_ENCODER.getVelocity() / (ComponentData.SCALE_FACTOR * 100)),
                       new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
-                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
+                    (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
                     new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
@@ -632,7 +637,8 @@ public final class Constants {
                 STATE_SENSOR,
                 Values.LINEAR_MAXIMUM_VELOCITY,
                 Control.CONSTRAINTS,
-                Control.CONTROL_LOOP)):
+                Control.CONTROL_LOOP, 
+                Units.degreesToRadians(Values.PRIMARY_ENCODER_OFFSET))):
               (new LinearSystemModule(
                 (LINEAR_CONTROLLER),
                 (AZIMUTH_CONTROLLER),
@@ -643,7 +649,7 @@ public final class Constants {
           }
 
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.15);
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);
             public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);
             public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                                
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);              
