@@ -28,7 +28,6 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Nat;
 
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
-import frc.robot.subsystems.drivebase.Constants.Values.ComponentData;
 import frc.lib.motion.control.LinearSystemModule;
 
 import java.util.function.Supplier;
@@ -178,8 +177,8 @@ public final class Constants {
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (LINEAR_ENCODER.getVelocity()),
-                      new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  (LINEAR_ENCODER.getVelocity() / (1000.0)),
+                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
@@ -325,7 +324,7 @@ public final class Constants {
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (LINEAR_ENCODER.getVelocity()),
+                      (LINEAR_ENCODER.getVelocity() / (1000.0)),
                       new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
@@ -473,8 +472,8 @@ public final class Constants {
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                     (LINEAR_ENCODER.getVelocity()),
-                      new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  (LINEAR_ENCODER.getVelocity() / (1000.0)),
+                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
@@ -621,8 +620,8 @@ public final class Constants {
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                     (LINEAR_ENCODER.getVelocity() / (ComponentData.SCALE_FACTOR * 100)),
-                      new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  (LINEAR_ENCODER.getVelocity() / (1000.0)),
+                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
