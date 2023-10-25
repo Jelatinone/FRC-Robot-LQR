@@ -54,16 +54,16 @@ public final class Constants {
     }
 
     public static final class Chassis {
- 
-      public static final Double WHEEL_DIAMETER = (0.1016);          
-      public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;      
       public static final Boolean IS_SIMULATED = (RobotBase.isSimulation());    
-      public static final Boolean IS_NEO_SWERVE = (true);       
-      public static final Double DRIVETRAIN_LINEAR_GEAR_RATIO = (6.75);
-      public static final Double DRIVETRAIN_AZIMUTH_GEAR_RATIO = (150.0/7.0);
+      public static final Boolean IS_NEO_SWERVE = (true);           
+      public static final Double WHEEL_DIAMETER = (IS_NEO_SWERVE)? (Units.inchesToMeters((4))): (0.1016);          
+      public static final Double WHEEL_PERIMETER = (WHEEL_DIAMETER) * Math.PI;        
+      public static final Double DRIVETRAIN_LINEAR_GEAR_RATIO = ((6.75) / 1.0);
+      public static final Double DRIVETRAIN_AZIMUTH_GEAR_RATIO = (((150.0)/(7.0)) / 1.0);
       public static final Double DRIVETRAIN_WIDTH = (IS_NEO_SWERVE)? (Units.inchesToMeters((21.75))): (0.6858);   
-      public static final Double AZIMUTH_ENCODER_POSITION_FACTOR = ((WHEEL_DIAMETER * Math.PI) / DRIVETRAIN_AZIMUTH_GEAR_RATIO);
-      public static final Double LINEAR_ENCODER_VELOCITY_FACTOR = (AZIMUTH_ENCODER_POSITION_FACTOR / (60.0));               
+      public static final double ENCODER_POSITION_FACTOR = (WHEEL_DIAMETER * Math.PI) / DRIVETRAIN_LINEAR_GEAR_RATIO;
+      public static final Double LINEAR_ENCODER_VELOCITY_FACTOR = ENCODER_POSITION_FACTOR / (60.0);
+      public static final Double AZIMUTH_ENCODER_POSITION_FACTOR = (360.0) / DRIVETRAIN_AZIMUTH_GEAR_RATIO;       
     }
 
     public static final class Maximum {   
@@ -178,13 +178,13 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
                   (LINEAR_ENCODER.getVelocity() / (1000.0)),
-                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-                    new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
+                    Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
               (new LinearSystemModule(
@@ -324,14 +324,14 @@ public final class Constants {
             public static final RelativeEncoder AZIMUTH_ENCODER = (Chassis.IS_NEO_SWERVE)? (LinearSystemModule.configureEncoder(((CANSparkMax)LINEAR_CONTROLLER).getEncoder(),(Chassis.LINEAR_ENCODER_VELOCITY_FACTOR),(Chassis.AZIMUTH_ENCODER_POSITION_FACTOR))): (null);
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
-                      (LINEAR_ENCODER.getVelocity() / (1000.0)),
-                      new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  (LINEAR_ENCODER.getVelocity() / (1000.0)),
+                  Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-                    new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
+                    Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
               (new LinearSystemModule(
@@ -473,13 +473,13 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
                   (LINEAR_ENCODER.getVelocity() / (1000.0)),
-                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-                    new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
+                    Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
               (new LinearSystemModule(
@@ -621,13 +621,13 @@ public final class Constants {
             public static final Supplier<SwerveModuleState> STATE_SENSOR = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (() -> new SwerveModuleState(
                   (LINEAR_ENCODER.getVelocity() / (1000.0)),
-                  new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360))
+                  Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360))
               )):
               (() -> {
                   assert LINEAR_CONTROLLER instanceof WPI_TalonFX;
                   return new SwerveModuleState(
                     (2.0)*(((((WPI_TalonFX)LINEAR_CONTROLLER).getSelectedSensorVelocity() / Values.LINEAR_ENCODER_SENSITIVITY) * (10)) / Constants.Values.Chassis.DRIVETRAIN_AZIMUTH_GEAR_RATIO) * Math.PI * Constants.Values.Chassis.WHEEL_DIAMETER,
-                    new Rotation2d(PRIMARY_ENCODER.getAbsolutePosition() % (360)));
+                    Rotation2d.fromDegrees(PRIMARY_ENCODER.getPosition() % (360)));
               });
               public static final LinearSystemModule MODULE = (Constants.Values.Chassis.IS_SIMULATED)? 
               (new LinearSystemModule(

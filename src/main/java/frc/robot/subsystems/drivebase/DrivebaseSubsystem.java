@@ -113,7 +113,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        new Thread(DrivebaseSubsystem::post).start();
     }
 
     /**
@@ -132,7 +131,6 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         new Thread(() -> FIELD.setRobotPose(POSE_ESTIMATOR.updateWithTime((IntervalTime), Hardware.GYROSCOPE.getRotation2d(), getModulePositions()))).start();
         SmartDashboard.putNumber(("Drivebase/ResponseTime"),IntervalTime);
         LOGGER.recordOutput(("Drivebase/ResponseTime"),IntervalTime);
-        new Thread(DrivebaseSubsystem::post).start();
     }
 
     /**
@@ -211,6 +209,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
                 ControlType
             );
         }
+        post();
     }
 
     /**
