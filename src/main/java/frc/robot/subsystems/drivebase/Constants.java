@@ -105,7 +105,7 @@ public final class Constants {
             public static final Boolean LINEAR_INVERTED = (false);
 
             public static final String PRIMARY_ENCODER_NAME = ("ENCODER [FL]");
-            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (40.166016): (-313.006);  
+            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (40.166016 + 90): (-313.006);  
             public static final Double PRIMARY_ENCODER_SENSITIVITY = (4096.0);    
             public static final Boolean PRIMARY_ENCODER_INVERTED = (true);
             public static final Integer PRIMARY_ENCODER_ID = (Chassis.IS_NEO_SWERVE)? (31): (4);            
@@ -119,7 +119,7 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID, Values.PRIMARY_ENCODER_NAME)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
+            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
@@ -203,8 +203,7 @@ public final class Constants {
                 Control.CONSTRAINTS,
                 Control.CONTROL_LOOP));
           }
-      
-                                                                                                                                                                                                           //TODO: Read Documentation Below
+                                                                                                                                                                                    //TODO: Read Documentation Below
           public static final class Control {
             public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);                                                                                                          // Weight of control percision position (Qelms)
             public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);                                                                                                         // Weight of control percision velocity (Qelms)
@@ -252,7 +251,7 @@ public final class Constants {
             public static final Boolean LINEAR_INVERTED = (false);
 
             public static final String PRIMARY_ENCODER_NAME = ("ENCODER [FR]");
-            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (114.257812): (-68.582);  
+            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (114.257812 + 120): (-68.582);  
             public static final Double PRIMARY_ENCODER_SENSITIVITY = (4096.0);    
             public static final Boolean PRIMARY_ENCODER_INVERTED = (false);
             public static final Integer PRIMARY_ENCODER_ID = (Chassis.IS_NEO_SWERVE)? (32): (5);            
@@ -266,7 +265,7 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID, Values.PRIMARY_ENCODER_NAME)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
+            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
@@ -400,7 +399,7 @@ public final class Constants {
             public static final Boolean LINEAR_INVERTED = (false);
 
             public static final String PRIMARY_ENCODER_NAME = ("ENCODER [RL]");
-            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (302.695312): (134.209);   
+            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (302.695312 - 45): (134.209);   
             public static final Double PRIMARY_ENCODER_SENSITIVITY = (4096.0);    
             public static final Boolean PRIMARY_ENCODER_INVERTED = (false);
             public static final Integer PRIMARY_ENCODER_ID = (Chassis.IS_NEO_SWERVE)? (33): (6);
@@ -414,7 +413,7 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID, Values.PRIMARY_ENCODER_NAME)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
+            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,
@@ -548,7 +547,7 @@ public final class Constants {
             public static final Boolean LINEAR_INVERTED = (false);
 
             public static final String PRIMARY_ENCODER_NAME = ("AZIMUTH [RR]");
-            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (358.154297): (-257.783);             
+            public static final Double PRIMARY_ENCODER_OFFSET = (Chassis.IS_NEO_SWERVE)? (358.154297 + 180): (-257.783);             
             public static final Double PRIMARY_ENCODER_SENSITIVITY = (4096.0);    
             public static final Boolean PRIMARY_ENCODER_INVERTED = (false);
             public static final Integer PRIMARY_ENCODER_ID = (Chassis.IS_NEO_SWERVE)? (34): (7);
@@ -562,7 +561,7 @@ public final class Constants {
           }
 
           public static final class Components {
-            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID, Values.PRIMARY_ENCODER_NAME)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
+            public static final WPI_CANCoder PRIMARY_ENCODER = LinearSystemModule.configureRotationEncoder((new WPI_CANCoder(Values.PRIMARY_ENCODER_ID)), Values.PRIMARY_ENCODER_OFFSET, Values.PRIMARY_ENCODER_INVERTED);
             public static final MotorController LINEAR_CONTROLLER = (Constants.Values.Chassis.IS_NEO_SWERVE)?
               (LinearSystemModule.configureController(new CANSparkMax(
                       Values.LINEAR_ID,

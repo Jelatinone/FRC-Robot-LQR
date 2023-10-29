@@ -386,6 +386,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     public static WPI_TalonFX configureController(final WPI_TalonFX Controller, final WPI_CANCoder AzimuthEncoder, final StatorCurrentLimitConfiguration CurrentLimit, final Double Deadband, final Boolean Inverted) {
         Controller.configFactoryDefault();
+        Controller.clearStickyFaults();
         Controller.setInverted(Inverted);
         Controller.setNeutralMode(NeutralMode.Brake);
         Controller.configRemoteFeedbackFilter(AzimuthEncoder, (0));
@@ -408,6 +409,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     public static WPI_TalonFX configureTranslationController(final WPI_TalonFX Controller, final StatorCurrentLimitConfiguration CurrentLimit, final Boolean Inverted) {
         Controller.configFactoryDefault();
+        Controller.clearStickyFaults();
         Controller.setInverted(Inverted);
         Controller.setNeutralMode(NeutralMode.Brake);
         Controller.configStatorCurrentLimit(CurrentLimit);
@@ -427,12 +429,13 @@ public final class LinearSystemModule implements DrivebaseModule  {
      */
     public static WPI_CANCoder configureRotationEncoder(final WPI_CANCoder AzimuthEncoder, final Double Offset, final Boolean Inverted) {
         AzimuthEncoder.configFactoryDefault();
+        AzimuthEncoder.clearStickyFaults();
         AzimuthEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+        AzimuthEncoder.configSensorDirection(Inverted);        
+        AzimuthEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);        
         AzimuthEncoder.configGetFeedbackTimeBase(SensorTimeBase.PerSecond.value);        
         AzimuthEncoder.configMagnetOffset(Offset);
-        AzimuthEncoder.configSensorDirection(Inverted);
-        AzimuthEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
-        AzimuthEncoder.setPositionToAbsolute();        
+        AzimuthEncoder.setPositionToAbsolute();     
         return AzimuthEncoder;
     }
 

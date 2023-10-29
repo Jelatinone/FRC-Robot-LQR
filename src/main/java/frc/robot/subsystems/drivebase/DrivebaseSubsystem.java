@@ -31,6 +31,7 @@ import java.util.List;
 
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
+import frc.lib.motion.control.CTREModuleState;
 import frc.lib.motion.control.DrivebaseModule;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
@@ -219,8 +220,9 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
      * @param ControlType Whether to use OpenLoop control
      */
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
+        var MeasuredStateIterator = MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).iterator();
         Demand.stream().sequential().forEachOrdered((State) -> 
-            State.speedMetersPerSecond = ((((State.speedMetersPerSecond * (60)) / Values.Chassis.WHEEL_DIAMETER) * Values.Chassis.DRIVETRAIN_LINEAR_GEAR_RATIO) * (Values.ComponentData.STANDARD_ENCODER_SENSITIVITY / (600)) * 1e-4) * 8);
+            State = CTREModuleState.optimize(State, MeasuredStateIterator.next().angle));
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
         SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
         var DemandIterator = Demand.iterator();        
