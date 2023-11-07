@@ -99,6 +99,56 @@ public interface DrivebaseModule extends Sendable, Closeable, Supplier<SwerveMod
      */
   public default void setPosition(final Supplier<Rotation2d> Demand) {}
 
+
+  
+  /**
+   * Optimize the swerve module state to reduce unesscessary rotations.
+   * @param Desired  Generated demand state
+   * @param Measured Measured anngle
+   * @return An optimized state with reduced rotations
+   */
+  public static SwerveModuleState optimize(SwerveModuleState Desired, Rotation2d Measured) {
+    double TargetPosition = scope(Measured.getDegrees(), Desired.angle.getDegrees());
+    double TargetVelocity = Desired.speedMetersPerSecond;
+    double DeltaPosition = TargetPosition - Measured.getDegrees();
+    if (Math.abs(DeltaPosition) > 90){
+        TargetVelocity = -TargetVelocity;
+        TargetPosition = DeltaPosition > 90 ? (TargetPosition -= 180) : (TargetPosition += 180);
+    }        
+    return new SwerveModuleState(TargetVelocity, Rotation2d.fromDegrees(TargetPosition));
+  }
+
+  /**
+   * Places the angles within the correct reference scope
+   * @param Reference Referemce scope
+   * @param Target    Target scope
+   * @return Angle placed within the correct scope
+   */
+  private static double scope(double Reference, double Target) {
+    double LowerBound;
+    double UpperBound;
+    double LowerOffset = Reference % 360;
+    if (LowerOffset >= 0) {
+      LowerBound = Reference - LowerOffset;
+      UpperBound = Reference + (360 - LowerOffset);
+    } else {
+      UpperBound = Reference - LowerOffset;
+      LowerBound = Reference - (360 + LowerOffset);
+    }
+    while (Target < LowerBound) {
+      Target += 360;
+    }
+    while (Target > UpperBound) {
+      Target -= 360;
+    }
+    if (Target - Reference > 180) {
+      Target -= 360;
+    } else if (Target - Reference < -180) {
+      Target += 360;
+    }
+    return Target;
+  }
+
   
     /**
      * Get the current state of the module as a {@link edu.wpi.first.math.kinematics.SwerveModuleState SwerveModuleState}.

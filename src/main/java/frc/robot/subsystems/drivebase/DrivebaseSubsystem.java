@@ -24,14 +24,12 @@ import edu.wpi.first.wpilibj.Timer;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
-import frc.lib.motion.control.CTREModuleState;
 import frc.lib.motion.control.DrivebaseModule;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
@@ -52,7 +50,7 @@ import static frc.robot.Constants.LOGGER;
  *
  * @author Cody Washington (@Jelatinone)
  */
-public final class DrivebaseSubsystem extends SubsystemBase implements Closeable, Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
+public final class DrivebaseSubsystem extends SubsystemBase implements Consumer<SwerveModuleState[]>, Supplier<Pose2d> {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
     private static final List<DrivebaseModule> MODULES = List.of(
         Hardware.Modules.FL_Module.Components.MODULE,
@@ -173,14 +171,7 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
         LOGGER.recordOutput(("Drivebase/Heading"), Hardware.GYROSCOPE.getYaw());    
         LOGGER.recordOutput(("Drivebase/Pose"), FieldPose);   
     }
-
-    /**
-     * Closes all resources held within the subsystem, makes subsystem unusable
-     */
-    public void close() {
-        FIELD.close();
-    }
-    // --------------------------------------------------------------[Mutators]-----------------------------i9u87----------------------------------//
+    // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
     /**
      * Set and  demand states based on translation and orientation joystick inputs to generate module states
      *
@@ -215,14 +206,13 @@ public final class DrivebaseSubsystem extends SubsystemBase implements Closeable
 
     /**
      * Set Module states given a list of swerve module states and a control type
-     *
      * @param Demand      Module state demands
      * @param ControlType Whether to use OpenLoop control
      */
     public static synchronized void set(List<SwerveModuleState> Demand, final Supplier<Boolean> ControlType) {
         var MeasuredStateIterator = MODULES.stream().map(DrivebaseModule::getMeasuredModuleState).iterator();
         Demand.stream().sequential().forEachOrdered((State) -> 
-            State = CTREModuleState.optimize(State, MeasuredStateIterator.next().angle));
+            State = DrivebaseModule.optimize(State, MeasuredStateIterator.next().angle));
         var DemandArray = Demand.toArray(SwerveModuleState[]::new);
         SwerveDriveKinematics.desaturateWheelSpeeds(DemandArray, Maximum.ROBOT_MAXIMUM_X_TRANSLATION_OUTPUT);
         var DemandIterator = Demand.iterator();        

@@ -148,7 +148,6 @@ public final class LinearSystemModule implements DrivebaseModule  {
     }
 
     // --------------------------------------------------------------[Mutators]---------------------------------------------------------------//
-
     /**
      * Set the translation (linear velocity) controller to meet a specified demand using a control type
      *
@@ -198,7 +197,7 @@ public final class LinearSystemModule implements DrivebaseModule  {
      *
      * @param Demand The specified demand as a rotation in two-dimensional space as a {@link edu.wpi.first.math.geometry.Rotation2d Rotation2d}
      */
-    @Override                                                                                                                                                                        //TODO: Read Documentation Below
+    @Override                                                                                                                                                                        // TODO: Read Documentation Below
     public synchronized void setPosition(final Supplier<Rotation2d> Demand) {
         var RotationDemand = Demand.get();                                                                                                                                           // Obtain the actual rotation from the supplier, this is a supplier for parity with #setVelocity(Supplier,Supplier)
         if (RotationDemand != null & !Double.isNaN(Objects.requireNonNull(RotationDemand).getRadians())) {                                                                           // Check for null or non-existent values, discard
@@ -449,8 +448,8 @@ public final class LinearSystemModule implements DrivebaseModule  {
      * @return A copy of the configured controller
      */
     public static CANSparkMax configureController(final CANSparkMax Controller, final Integer AmpLimit, final Double NominalVoltage, final Boolean Inverted) {
-        Controller.clearFaults();
         Controller.restoreFactoryDefaults();
+        Controller.clearFaults();        
         Controller.setInverted(Inverted);
         Controller.setSmartCurrentLimit(AmpLimit);
         Controller.setIdleMode(IdleMode.kBrake);

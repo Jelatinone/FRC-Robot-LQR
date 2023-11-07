@@ -11,13 +11,13 @@ import com.revrobotics.CANSparkMax;
 
 import edu.wpi.first.math.controller.LinearQuadraticRegulator;
 import edu.wpi.first.wpilibj.motorcontrol.MotorController;
-import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.simulation.FlywheelSim;
 import edu.wpi.first.math.system.LinearSystemLoop;
 import edu.wpi.first.math.estimator.KalmanFilter;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.LinearSystem;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -203,10 +203,10 @@ public final class Constants {
                 Control.CONSTRAINTS,
                 Control.CONTROL_LOOP));
           }
-                                                                                                                                                                                    //TODO: Read Documentation Below
+                                                                                                                                                                                                           // TODO: Read Documentation Below
           public static final class Control {
-            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (1.0);                                                                                                          // Weight of control percision position (Qelms)
-            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (1.0);                                                                                                         // Weight of control percision velocity (Qelms)
+            public static final Double REGULATOR_QELMS_DEGREES_ACCURACY_POSITION_WEIGHT = (0.01);                                                                                                          // Weight of control percision position (Qelms)
+            public static final Double REGULATOR_QELMS_ROTATIONS_ACCURACY_VELOCITY_WEIGHT = (0.01);                                                                                                        // Weight of control percision velocity (Qelms)
             public static final Double REGULATOR_RELMS_CONTROLLER_EFFORT_WEIGHT = (0.01);                                                                                                                  // Weight of control effort (Relms)
             public static final TrapezoidProfile.Constraints CONSTRAINTS = new TrapezoidProfile.Constraints(Values.AZIMUTH_MAXIMUM_VELOCITY, Values.AZIMUTH_MAXIMUM_ACCELERATION);                         // Constraints for maximum velocity and acceleration of azimuth
             public static final LinearSystem<N2,N1,N1> PLANT = LinearSystemId.identifyPositionSystem(Values.MODEL_VELOCITY_GAIN, Values.MODEL_ACCELERATION_GAIN);                                          // Single Input, Single Output State-Space System
@@ -228,6 +228,7 @@ public final class Constants {
               Values.DISCRETIZATION_TIMESTEP);                                                                                                                                                             // + Nominal timestep
           }
         }
+
         public static final class FR_Module {
 
           public static final class Values {
