@@ -28,9 +28,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import frc.lib.motion.legacycontrol.DrivebaseModule;
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
 import frc.robot.subsystems.drivebase.Constants.Values.Maximum;
-import frc.lib.motion.control.DrivebaseModule;
 
 import static frc.robot.subsystems.drivebase.Constants.Hardware;
 import static frc.robot.subsystems.drivebase.Constants.Values;
@@ -44,7 +44,7 @@ import static frc.robot.Constants.LOGGER;
  *
  *
  * <p> {@link frc.robot.subsystems.drivebase.Constants Constants} based implementation of swerve drivebase which utilizes
- * {@link frc.lib.motion.control.LinearSystemModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
+ * {@link frc.lib.motion.legacycontrol.LinearSystemModule modules} based on {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} to achieve more
  * accurate azimuth positioning. This subsystem is entirely static, meaning only one instance will exist and this Instance is obtained
  * by calling {@link #getInstance()} from a static context. </p>
  *

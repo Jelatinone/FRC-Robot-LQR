@@ -26,9 +26,8 @@ import edu.wpi.first.math.numbers.N2;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Nat;
-
+import frc.lib.motion.legacycontrol.LinearSystemModule;
 import frc.robot.subsystems.drivebase.Constants.Values.Chassis;
-import frc.lib.motion.control.LinearSystemModule;
 
 import java.util.function.Supplier;
 // --------------------------------------------------------------[Constants Class]------------------------------------------------------------//

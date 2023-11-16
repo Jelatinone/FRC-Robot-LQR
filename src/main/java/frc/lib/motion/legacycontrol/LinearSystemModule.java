@@ -1,5 +1,5 @@
 // ----------------------------------------------------------------[Package]----------------------------------------------------------------//
-package frc.lib.motion.control;
+package frc.lib.motion.legacycontrol;
 // ---------------------------------------------------------------[Libraries]---------------------------------------------------------------//
 import com.ctre.phoenix.motorcontrol.StatorCurrentLimitConfiguration;
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
@@ -52,7 +52,7 @@ import frc.lib.MotionState;
  * the necessary voltage using a {@link  edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} control loop. <p>
  *
  * @author Cody Washington (@Jelatinone)
- * @see frc.lib.motion.control.DrivebaseModule DrivebaseModule
+ * @see frc.lib.motion.legacycontrol.DrivebaseModule DrivebaseModule
  */
 public final class LinearSystemModule implements DrivebaseModule  {
     // --------------------------------------------------------------[Constants]--------------------------------------------------------------//
