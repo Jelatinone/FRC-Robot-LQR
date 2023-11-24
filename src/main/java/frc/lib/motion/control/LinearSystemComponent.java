@@ -27,6 +27,7 @@ import org.littletonrobotics.junction.Logger;
  * <p>Shape-safe wrapper for the {@link edu.wpi.first.math.system.LinearSystemLoop LinearSystemLoop} class, with additional support for angle wrapped, or unwrapped
  * when output is calculated, and support for characterizatiom.</p>
  * 
+ * @author Cody Washington (Team 5411)
  * @see Component
  */
 public class LinearSystemComponent implements Component {

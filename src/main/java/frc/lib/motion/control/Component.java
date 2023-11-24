@@ -14,6 +14,8 @@ import edu.wpi.first.math.Num;
  * <p>Represents a device which can control some motion and take in some double matrix inputs, which
  * control the underlying hardware to produce some output, which can be measured to provide feedback
  * to an optional controller.
+ *
+ * @author Cody Washington (Team 5411)
  */
 public interface Component {
   // ---------------------------------------------------------------[Abstract]------------------------------------------------------------------//
