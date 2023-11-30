@@ -77,9 +77,9 @@ public final class Robot extends LoggedRobot  {
     LOGGER.recordOutput("UniqueOperations/" + OperationName + "_" + Integer.toHexString(Operation.hashCode()), Active);
     LOGGER.recordOutput("Operations/" + OperationName, Count > (0));
     });
-    CommandScheduler.getInstance().onCommandInitialize((Command Command) -> CommandFunctionLogger.accept(Command, (true)));
-    CommandScheduler.getInstance().onCommandInterrupt((Command Command) -> CommandFunctionLogger.accept(Command, (false)));
-    CommandScheduler.getInstance().onCommandFinish((Command Command) -> CommandFunctionLogger.accept(Command, (false)));    
+    CommandScheduler.getInstance().onCommandInitialize((Command) -> CommandFunctionLogger.accept(Command, (true)));
+    CommandScheduler.getInstance().onCommandInterrupt((Command) -> CommandFunctionLogger.accept(Command, (false)));
+    CommandScheduler.getInstance().onCommandFinish((Command) -> CommandFunctionLogger.accept(Command, (false)));    
     LOGGER.start();
     for (int ForwardingPort = (5800); ForwardingPort <= (5805); ForwardingPort++) {
       PortForwarder.add(ForwardingPort, ("limelight.local"), ForwardingPort);
@@ -142,8 +142,6 @@ public final class Robot extends LoggedRobot  {
   @Override
   public void teleopInit() {
     Shuffleboard.startRecording();    
-    RobotContainer.applySubsystemDefaults();
-
   }
 
   @Override
@@ -153,7 +151,6 @@ public final class Robot extends LoggedRobot  {
 
   @Override
   public void teleopExit() {
-    RobotContainer.removeSubsystemDefaults();
     Shuffleboard.stopRecording();
   }     
 
